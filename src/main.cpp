@@ -1,0 +1,149 @@
+/*
+ * main.cpp
+ *
+ *  Created on: 2016/11/21
+ *      Author: z1j7663
+ */
+
+#include "CNesEngine.h"
+
+using namespace NesEngine;
+
+void load_rom(void);
+CNesEngine nesengine;
+
+#define LDA_IM		0xA9
+#define LDA_Z		0xA5
+#define LDA_ZX		0xB5
+#define LDA_A		0xAD
+#define LDA_AX		0xBD
+#define LDA_IX		0xA1
+#define LDA_IY		0xB1
+
+#define LDX_IM		0xA2
+#define LDX_Z		0xA6
+#define LDX_ZY		0xB6
+#define LDX_A		0xAE
+#define LDX_AY		0xBE
+
+#define LDY_IM		0xA0
+#define LDY_Z		0xA4
+#define LDY_ZX		0xB4
+#define LDY_A		0xAC
+#define LDY_AX		0xBC
+
+#define STA_Z		0x85
+#define STA_ZX		0x95
+#define STA_A		0x8D
+#define STA_AX		0x9D
+#define STA_IX		0x81
+#define STA_IY		0x91
+
+#define ADC_IM		0x69
+#define ADC_Z		0x65
+#define ADC_ZX		0x75
+#define ADC_A		0x6D
+#define ADC_AX		0x7D
+#define ADC_IX		0x61
+#define ADC_IY		0x71
+
+#define JMP_A		0x4C
+#define JMP_IN		0x6C
+
+#define TAX		0xAA
+#define TXA		0x8A
+#define TAY		0xA8
+#define TYA		0x98
+#define TXS		0x9A
+#define TSX		0xBA
+
+
+int main()
+{
+	int i = 0;
+	setvbuf(stdout, NULL, _IONBF, 0);
+	setvbuf(stderr, NULL, _IONBF, 0);
+	load_rom();
+	for (i = 0; i < 100; i++) {
+		nesengine.ExecuteCPU();
+	}
+
+	return 0;
+}
+
+void load_rom(void)
+{
+	int i = 0;
+	unsigned char nes_rom[0xFFFF];
+	unsigned char nes_header[0x10];
+	unsigned char nes[0xA000];
+
+	memset(nes_rom, 0, sizeof(nes_rom));
+	memset(nes_header, 0, sizeof(nes_header));
+	memset(nes, 0, sizeof(nes));
+
+	i = 0;
+	nes_header[i++] = 0x4E; // N
+	nes_header[i++] = 0x45; // E
+	nes_header[i++] = 0x53; // S
+	nes_header[i++] = 0x1A;
+	nes_header[i++] = 0x02;
+	nes_header[i++] = 0x01;
+	nes_header[i++] = 0x01;
+
+	nes[0x7FFA] = 0x82;
+	nes[0x7FFB] = 0x80;
+	nes[0x7FFC] = 0x00;
+	nes[0x7FFD] = 0x80;
+	nes[0x7FFE] = 0xF0;
+	nes[0x7FFF] = 0xFF;
+
+	i = 0;
+//	nes[i++] = LDA_IM;
+//	nes[i++] = 0x01;
+//	nes[i++] = STA_Z;
+//	nes[i++] = 0x01;
+//	nes[i++] = ADC_IM;
+//	nes[i++] = 0xB0;
+//	nes[i++] = JMP_A;
+//	nes[i++] = 0x04;
+//	nes[i++] = 0x80;
+
+
+
+	// indirect sta======================
+	nes[i++] = LDA_IM;
+	nes[i++] = 0x10;
+	nes[i++] = STA_Z;
+	nes[i++] = 0x00;
+
+	nes[i++] = LDA_IM;
+	nes[i++] = 0x20;
+	nes[i++] = STA_Z;
+	nes[i++] = 0x02;
+
+	nes[i++] = LDA_IM;
+	nes[i++] = 0x00;
+	nes[i++] = STA_Z;
+	nes[i++] = 0x01;
+
+	nes[i++] = LDA_IM;
+	nes[i++] = 0xFF;
+	nes[i++] = LDY_IM;
+	nes[i++] = 0x00;
+	nes[i++] = STA_IY;
+	nes[i++] = 0x00;
+
+	nes[i++] = LDY_IM;
+	nes[i++] = 0x02;
+	nes[i++] = STA_IY;
+	nes[i++] = 0x00;
+
+	memcpy(nes_rom, nes_header, sizeof(nes_header));
+	memcpy(nes_rom + sizeof(nes_header), nes, sizeof(nes));
+
+
+	nesengine.LoadFromMemory(nes_rom);
+
+	return;
+}
