@@ -1,0 +1,142 @@
+/*
+ * main.cpp
+ *
+ *  Created on: 2016/11/21
+ *      Author: z1j7663
+ */
+
+//
+//#include <iostream>
+//#include <SDL2/SDL.h>
+//
+//#include "main.h"
+//#include "CNesEngine.h"
+//
+//using namespace NesEngine;
+//
+//static void load_rom(void);
+//CNesEngine nesengine;
+//
+//
+//
+//int main(int argc, char* argv[])
+//{
+//
+////	fprintf(fp, "main start\r\n");
+////	int i = 0;
+//	setvbuf(stdout, NULL, _IONBF, 0);
+//	setvbuf(stderr, NULL, _IONBF, 0);
+//
+//	if (SDL_Init(SDL_INIT_VIDEO) != 0){
+//		std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
+//		return 1;
+//	}
+//
+//	SDL_Window *win = SDL_CreateWindow("Hello World!", 100, 100, 640, 480, SDL_WINDOW_SHOWN);
+//	if (win == NULL){
+//		std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
+//	}
+//
+//	SDL_Renderer *renderer =
+//			SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+//
+//	while (1) {
+//		SDL_Event e;
+//		if (SDL_PollEvent(&e)) {
+//			if (e.type == SDL_QUIT) {
+//				break;
+//			}
+//		}
+//		SDL_RenderClear(renderer);
+//		//SDL_RenderCopy(renderer, bitmapTex, NULL, NULL);
+//		SDL_RenderPresent(renderer);
+//    }
+//	SDL_DestroyRenderer(renderer);
+//	SDL_DestroyWindow(win);
+//	SDL_Quit();
+////
+//////	load_rom();
+//////	for (i = 0; i < 100; i++) {
+//////		nesengine.ExecuteCPU();
+//////	}
+//
+//
+//	return 0;
+//}
+//
+//static void load_rom(void)
+//{
+//	int i = 0;
+//	unsigned char nes_rom[0xFFFF];
+//	unsigned char nes_header[0x10];
+//	unsigned char nes[0xA000];
+//
+//	memset(nes_rom, 0, sizeof(nes_rom));
+//	memset(nes_header, 0, sizeof(nes_header));
+//	memset(nes, 0, sizeof(nes));
+//
+//	i = 0;
+//	nes_header[i++] = 0x4E; // N
+//	nes_header[i++] = 0x45; // E
+//	nes_header[i++] = 0x53; // S
+//	nes_header[i++] = 0x1A;
+//	nes_header[i++] = 0x02;
+//	nes_header[i++] = 0x01;
+//	nes_header[i++] = 0x01;
+//
+//	nes[0x7FFA] = 0x82;
+//	nes[0x7FFB] = 0x80;
+//	nes[0x7FFC] = 0x00;
+//	nes[0x7FFD] = 0x80;
+//	nes[0x7FFE] = 0xF0;
+//	nes[0x7FFF] = 0xFF;
+//
+//	i = 0;
+////	nes[i++] = LDA_IM;
+////	nes[i++] = 0x01;
+////	nes[i++] = STA_Z;
+////	nes[i++] = 0x01;
+////	nes[i++] = ADC_IM;
+////	nes[i++] = 0xB0;
+////	nes[i++] = JMP_A;
+////	nes[i++] = 0x04;
+////	nes[i++] = 0x80;
+//
+//
+//
+//	// indirect sta======================
+//	nes[i++] = LDA_IM;
+//	nes[i++] = 0x10;
+//	nes[i++] = STA_Z;
+//	nes[i++] = 0x00;
+//
+//	nes[i++] = LDA_IM;
+//	nes[i++] = 0x20;
+//	nes[i++] = STA_Z;
+//	nes[i++] = 0x02;
+//
+//	nes[i++] = LDA_IM;
+//	nes[i++] = 0x00;
+//	nes[i++] = STA_Z;
+//	nes[i++] = 0x01;
+//
+//	nes[i++] = LDA_IM;
+//	nes[i++] = 0xFF;
+//	nes[i++] = LDY_IM;
+//	nes[i++] = 0x00;
+//	nes[i++] = STA_IY;
+//	nes[i++] = 0x00;
+//
+//	nes[i++] = LDY_IM;
+//	nes[i++] = 0x02;
+//	nes[i++] = STA_IY;
+//	nes[i++] = 0x00;
+//
+//	memcpy(nes_rom, nes_header, sizeof(nes_header));
+//	memcpy(nes_rom + sizeof(nes_header), nes, sizeof(nes));
+//
+//
+//	nesengine.LoadFromMemory(nes_rom);
+//
+//	return;
+//}
