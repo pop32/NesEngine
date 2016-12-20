@@ -10,10 +10,31 @@
 
 #include <wx/wxprec.h>
 #include <wx/wx.h>
+#include <wx/custombgwin.h>
+#include <wx/dcbuffer.h>
+#include <wx/chartype.h>
 
-// ----------------------------------------------------------------------------
-// resources
-// ----------------------------------------------------------------------------
+class MemoryDumpView : public wxCustomBackgroundWindow<wxScrolledWindow>
+{
+public:
+	MemoryDumpView(wxFrame *parent);
+
+
+private:
+
+	wxBitmap surfaceBmp;
+	wxFont font;
+
+	void OnPaint( wxPaintEvent &event );
+	void OnEraseBackground( wxEraseEvent &event );
+
+	void DoPaint(wxDC& dc);
+
+	void DrawTopLeft(wxDC& dc);
+
+	wxDECLARE_EVENT_TABLE();
+};
+
 
 class CMemoryDumpFrm : public wxFrame {
 public:
@@ -28,6 +49,7 @@ public:
 	void OnCaretMove(wxCommandEvent& event);
 
 private:
+	MemoryDumpView *m_MemoryDumpView;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();
