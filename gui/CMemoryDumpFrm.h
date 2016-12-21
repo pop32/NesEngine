@@ -14,7 +14,7 @@
 #include <wx/dcbuffer.h>
 #include <wx/chartype.h>
 
-template <class T = wxWindow>
+template <class T>
 class MemoryDumpViewBase : public wxCustomBackgroundWindow<T>
 {
 public:
@@ -64,7 +64,6 @@ protected:
 	void WriteStrTopFixView(wxDC& dc, wxString str, int col);
 	void WriteStrLeftFixView(wxDC& dc, wxString str, int row);
 
-
 };
 
 class MemoryDumpViewHeader : public MemoryDumpViewBase<wxScrolledWindow>
@@ -97,7 +96,6 @@ public:
 	CMemoryDumpFrm(wxFrame *parent, const wxString& title, const wxPoint& pos, const wxSize& size);
 	virtual ~CMemoryDumpFrm();
 
-	// event handlers (these functions should _not_ be virtual)
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 //	void OnSetBlinkTime(wxCommandEvent& event);

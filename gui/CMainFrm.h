@@ -12,6 +12,7 @@
 #include <wx/wx.h>
 
 #include "CMemoryDumpFrm.h"
+#include "CNesEditorFrm.h"
 
 class CMainFrm : public wxFrame {
 public:
@@ -22,6 +23,7 @@ public:
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnMemoryDump(wxCommandEvent& event);
+	void OnNesEditor(wxCommandEvent& event);
 
 private:
 
@@ -41,6 +43,7 @@ enum
 	CMainFrm_Quit = 1,
 	CMainFrm_About,
 	CMainFrm_MemoryDump,
+	CMainFrm_NesEditor,
 };
 
 

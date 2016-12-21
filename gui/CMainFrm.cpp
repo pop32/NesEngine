@@ -18,6 +18,7 @@ wxBEGIN_EVENT_TABLE(CMainFrm, wxFrame)
 	EVT_MENU(CMainFrm_Quit,  CMainFrm::OnQuit)
 	EVT_MENU(CMainFrm_About, CMainFrm::OnAbout)
 	EVT_MENU(CMainFrm_MemoryDump, CMainFrm::OnMemoryDump)
+	EVT_MENU(CMainFrm_NesEditor, CMainFrm::OnNesEditor)
 wxEND_EVENT_TABLE()
 
 
@@ -41,6 +42,7 @@ CMainFrm::CMainFrm(const wxString& title, const wxPoint& pos, const wxSize& size
 
 	wxMenu *menuTool = new wxMenu;
 	menuTool->Append(CMainFrm_MemoryDump, wxT("&MemoryDump\tCtrl-M"));
+	menuTool->Append(CMainFrm_NesEditor, wxT("&NesEditor\tCtrl-E"));
 
 	// now append the freshly created menu to the menu bar...
 	wxMenuBar *menuBar = new wxMenuBar;
@@ -50,8 +52,6 @@ CMainFrm::CMainFrm(const wxString& title, const wxPoint& pos, const wxSize& size
 	// ... and attach this menu bar to the frame
 	SetMenuBar(menuBar);
 
-//	frmMmoryDump = new CMemoryDumpFrm(wxT("Memory Dump"),
-//			wxPoint(50, 50), wxSize(450, 340));
 
 }
 
@@ -73,8 +73,16 @@ void CMainFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
 void CMainFrm::OnMemoryDump(wxCommandEvent& WXUNUSED(event))
 {
 	// TODO memory leak ???
-	CMemoryDumpFrm *frm = new CMemoryDumpFrm(this,wxT("Memory Dump"),
+	CMemoryDumpFrm *frm = new CMemoryDumpFrm(this, wxT("Memory Dump"),
 						wxPoint(50, 50), wxSize(450, 340));
+	frm->Show(TRUE);
+}
+
+void CMainFrm::OnNesEditor(wxCommandEvent& WXUNUSED(event))
+{
+	// TODO memory leak ???
+	CNesEditorFrm *frm = new CNesEditorFrm(this, wxT("Nes Editor"),
+						wxPoint(50, 50), wxSize(650, 440));
 	frm->Show(TRUE);
 
 }
