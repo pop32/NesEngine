@@ -2,7 +2,7 @@
  * CNesEditor.h
  *
  *  Created on: 2016/12/21
- *      Author: kyon
+ *	  Author: kyon
  */
 
 #ifndef GUI_CNESEDITORFRM_H_
@@ -27,16 +27,32 @@ protected:
 	wxFont m_font;
 	wxColor viewBkColor;
 
-	int m_heightChar;
-	int m_widthChar;
+	int m_heightChar, m_widthChar;
+	uint32_t m_CharPos;
+	uint32_t m_xCaret, m_yCaret;
+	uint32_t m_xChars, m_yChars;
+	int m_xMargin, m_yMargin;
+	std::vector<wxString*> m_text;
 
+	// event
 	void OnPaint( wxPaintEvent &event );
+	void OnChar(wxKeyEvent &event);
 	//void OnEraseBackground( wxEraseEvent &event );
 
 	void DoPaint(wxDC& dc);
+	void DoMoveCaret();
 
+	// キャレット操作
+	void Home();
+	void End();
+	void FirstLine();
+	void LastLine();
+	void PrevChar();
+	void NextChar();
+	void PrevLine();
+	void NextLine();
 
-	std::vector<wxString*> m_text;
+	void CalcCaretPos(wxString &str, int cnt);
 
 };
 

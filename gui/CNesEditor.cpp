@@ -2,7 +2,7 @@
  * CNesEditor.cpp
  *
  *  Created on: 2016/12/21
- *      Author: kyon
+ *	  Author: kyon
  */
 
 #include "CNesEditorFrm.h"
@@ -104,18 +104,17 @@ template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 	m_heightChar = dc.GetCharHeight();
 	m_widthChar = dc.GetCharWidth();
 
+	m_CharPos = 0;
+	m_xCaret = m_yCaret = 0;
+	m_xChars = m_yChars = 0;
+	m_xMargin = m_yMargin = 3;
+
 	wxCaret *caret = new wxCaret(this, m_widthChar, m_heightChar);
 	caret->SetSize(m_widthChar, m_heightChar);
 	this->SetCaret(caret);
-	caret->Move(0,0);
+	DoMoveCaret();
 	caret->Show();
 
-}
-
-template <class T> void NesEditorViewBase<T>::DoPaint(wxDC& dc)
-{
-	this->PrepareDC(dc);
-	dc.DrawBitmap(m_surfaceBmp,0, 0, true);
 }
 
 template <class T> void NesEditorViewBase<T>::OnPaint( wxPaintEvent &WXUNUSED(event) )
@@ -125,6 +124,107 @@ template <class T> void NesEditorViewBase<T>::OnPaint( wxPaintEvent &WXUNUSED(ev
 	DoPaint(dc);
 }
 
+template <class T> void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
+{
+
+	switch ( event.GetKeyCode() )
+	{
+		case WXK_LEFT:
+			PrevChar();
+			break;
+
+		case WXK_RIGHT:
+			NextChar();
+			break;
+
+		case WXK_UP:
+			PrevLine();
+			break;
+
+		case WXK_DOWN:
+			NextLine();
+			break;
+
+		case WXK_HOME:
+			Home();
+			break;
+
+		case WXK_END:
+			End();
+			break;
+
+		case WXK_RETURN:
+			Home();
+			NextLine();
+			break;
+
+		default:
+			event.Skip();
+	}
+	DoMoveCaret();
+}
+
+template <class T> void NesEditorViewBase<T>::DoPaint(wxDC& dc)
+{
+	this->PrepareDC(dc);
+	dc.DrawBitmap(m_surfaceBmp,0, 0, true);
+}
+
+template <class T> void NesEditorViewBase<T>::DoMoveCaret()
+{
+	this->GetCaret()->Move(m_xMargin + m_xCaret * m_widthChar,
+					 m_yMargin + m_yCaret * m_heightChar);
+}
+
+template <class T> void NesEditorViewBase<T>::Home()
+{
+	m_xCaret = 0;
+}
+
+template <class T> void NesEditorViewBase<T>::End()
+{
+	if (m_text.size() < m_yCaret) {
+		m_xCaret = 0;
+	} else {
+		m_xCaret = 3;
+	}
+}
+
+template <class T> void NesEditorViewBase<T>::FirstLine()
+{
+
+}
+
+template <class T> void NesEditorViewBase<T>::LastLine()
+{
+
+}
+
+template <class T> void NesEditorViewBase<T>::PrevChar()
+{
+
+}
+
+template <class T> void NesEditorViewBase<T>::NextChar()
+{
+
+}
+
+template <class T> void NesEditorViewBase<T>::PrevLine()
+{
+
+}
+
+template <class T> void NesEditorViewBase<T>::NextLine()
+{
+
+}
+
+template <class T> void NesEditorViewBase<T>::CalcCaretPos()
+{
+
+}
+
 
 // ----------------------------------------------------------------------------
 // テキストエディタ
@@ -132,6 +232,7 @@ template <class T> void NesEditorViewBase<T>::OnPaint( wxPaintEvent &WXUNUSED(ev
 
 wxBEGIN_EVENT_TABLE(NesEditorView, wxScrolledWindow)
 	EVT_PAINT(NesEditorView::OnPaint)
+	EVT_CHAR(NesEditorView::OnChar)
 	//EVT_ERASE_BACKGROUND(MyCanvas::OnEraseBackground)
 wxEND_EVENT_TABLE()
 
@@ -156,8 +257,13 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	m_text.push_back(new wxString(wxT("abcdeあいうえお")));
 
 	dc.SetFont(m_font);
-	dc.DrawText(*m_text[0], 0, 0);
+	dc.DrawText(*m_text[0], m_xMargin, m_yMargin);
 
+	int a = m_text[0]->length();
+	int b = m_text[0]->Length();
+	int c = m_text[0]->Len();
+	int d = 0;
+	//m_text[0]->
 }
 
 
