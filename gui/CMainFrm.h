@@ -2,7 +2,7 @@
  * CMainFrm.h
  *
  *  Created on: 2016/12/12
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #ifndef GUI_CMAINFRM_H_

@@ -2,7 +2,7 @@
  * CMemoryDumpFrm.h
  *
  *  Created on: 2016/12/12
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #ifndef GUI_CMEMORYDUMPFRM_H_
@@ -124,8 +124,8 @@ private:
 // IDs for the controls and the menu commands
 enum
 {
-    // menu items
-    CMemoryDumpFrm_Quit = 1,
+	// menu items
+	CMemoryDumpFrm_Quit = 1,
 	CMemoryDumpFrm_About,
 	CMemoryDumpFrm_TestTimer,
 };

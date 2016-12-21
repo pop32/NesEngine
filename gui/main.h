@@ -2,7 +2,7 @@
  * main.h
  *
  *  Created on: 2016/11/30
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #ifndef MAIN_H_

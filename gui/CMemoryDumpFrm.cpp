@@ -32,7 +32,7 @@ CMemoryDumpFrm::CMemoryDumpFrm(wxFrame *parent, const wxString& title, const wxP
 	if ( !this->Create(parent, wxID_ANY,
 						title,
 						pos, size,
-						wxDEFAULT_FRAME_STYLE | wxFULL_REPAINT_ON_RESIZE) ) {
+						(wxDEFAULT_FRAME_STYLE & ~( wxMAXIMIZE_BOX | wxRESIZE_BORDER )) | wxSYSTEM_MENU | wxCAPTION ) ) {
 		return;
 	}
 
@@ -162,8 +162,8 @@ template <class T> void MemoryDumpViewBase<T>::WriteStr(wxDC& dc, wxString str, 
 
 	dc.SetFont(font);
 	dc.SetPen(*wxWHITE);
-    dc.SetBrush(viewBkColor);
-    dc.DrawRectangle(x, y, nBlockSizeX, nBlockSizeY);
+	dc.SetBrush(viewBkColor);
+	dc.DrawRectangle(x, y, nBlockSizeX, nBlockSizeY);
 
 	dc.DrawText(str, x, y);
 }
@@ -209,7 +209,7 @@ MemoryDumpViewHeader::MemoryDumpViewHeader(wxFrame *parent)
 : MemoryDumpViewBase(parent)
 {
 	Create(parent, wxID_ANY, wxDefaultPosition, wxSize(nViewWidth, nFixedTopHeight));
-	surfaceBmp = wxBitmap(nViewWidth, nFixedTopHeight);
+	surfaceBmp = wxBitmap(nViewWidth - 8, nFixedTopHeight);
 	wxMemoryDC dc(surfaceBmp);
 
 	dc.Clear();
@@ -225,7 +225,7 @@ void MemoryDumpViewHeader::DrawFixView(wxDC& dc)
 	dc.SetTextForeground(*wxBLACK);
 
 	dc.SetBrush(fixBkColor);
-	dc.DrawRectangle(0, 0, nViewWidth, nFixedTopHeight);
+	dc.DrawRectangle(0, 0, nViewWidth - 8, nFixedTopHeight);
 
 	for (int i=0; i < 0x10; i++) {
 		WriteByteHexTopFixView(dc, i, i);
@@ -254,7 +254,7 @@ MemoryDumpView::MemoryDumpView(wxFrame *parent)
 	SetBackgroundColour(*wxCYAN);
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-	surfaceBmp = wxBitmap(nViewWidth + 50, nViewHeight + 50);
+	surfaceBmp = wxBitmap(nViewWidth + 100, nViewHeight + 50);
 	wxMemoryDC dc(surfaceBmp);
 	PrepareDC(dc);
 
@@ -271,7 +271,7 @@ void MemoryDumpView::DrawFixView(wxDC& dc)
 	dc.SetTextForeground(*wxBLACK);
 
     dc.SetBrush(fixBkColor);
-    dc.DrawRectangle(0, 0, nFixedLeftWidth, nViewHeight);
+    dc.DrawRectangle(0, 0, nFixedLeftWidth, nViewHeight + 100);
 
 	for (int i=0; i < 0x1000; i++) {
 		WriteWordHexLeftFixView(dc, i * 0x10, i);
