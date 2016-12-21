@@ -14,23 +14,74 @@
 #include <wx/dcbuffer.h>
 #include <wx/chartype.h>
 
-class MemoryDumpView : public wxCustomBackgroundWindow<wxScrolledWindow>
+template <class T = wxWindow>
+class MemoryDumpViewBase : public wxCustomBackgroundWindow<T>
+{
+public:
+	MemoryDumpViewBase(wxFrame *parent);
+
+protected:
+	wxBitmap surfaceBmp;
+	wxFont font;
+	wxColor fixBkColor;
+
+	int nFixedLeftMargin;
+	int nFixedTopHeight;
+
+	int nFixedTopMargin;
+	int nFixedLeftWidth;
+
+	int nViewLeftMargin;
+	int nViewTopMargin;
+	int nViewLeftStart;
+	int nViewTopStart;
+
+	int nHexViewWidth;
+	int nHexViewHeight;
+	int nDrawMarginX;
+	int nDrawMarginY;
+	int nBlockSizeX;
+	int nBlockSizeY;
+
+	int nViewWidth;
+	int nViewHeight;
+
+	void OnPaint( wxPaintEvent &event );
+	//void OnEraseBackground( wxEraseEvent &event );
+
+	void DoPaint(wxDC& dc);
+
+	void WriteByteHex(wxDC& dc, uint8_t b, int col, int row);
+	void WriteStr(wxDC& dc, wxString str, int col, int row);
+
+	void WriteByteHexTopFixView(wxDC& dc, uint8_t b, int col);
+	void WriteWordHexLeftFixView(wxDC& dc, uint16_t b, int row);
+
+	void WriteStrTopFixView(wxDC& dc, wxString str, int col);
+	void WriteStrLeftFixView(wxDC& dc, wxString str, int row);
+
+};
+
+class MemoryDumpViewHeader : public MemoryDumpViewBase<wxScrolledWindow>
+{
+public:
+	MemoryDumpViewHeader(wxFrame *parent);
+
+private:
+	void DrawFixView(wxDC& dc);
+
+	wxDECLARE_EVENT_TABLE();
+
+};
+
+class MemoryDumpView : public MemoryDumpViewBase<wxScrolledWindow>
 {
 public:
 	MemoryDumpView(wxFrame *parent);
 
-
 private:
 
-	wxBitmap surfaceBmp;
-	wxFont font;
-
-	void OnPaint( wxPaintEvent &event );
-	void OnEraseBackground( wxEraseEvent &event );
-
-	void DoPaint(wxDC& dc);
-
-	void DrawTopLeft(wxDC& dc);
+	void DrawFixView(wxDC& dc);
 
 	wxDECLARE_EVENT_TABLE();
 };
@@ -49,7 +100,7 @@ public:
 	void OnCaretMove(wxCommandEvent& event);
 
 private:
-	MemoryDumpView *m_MemoryDumpView;
+	// MemoryDumpView *m_MemoryDumpView;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();

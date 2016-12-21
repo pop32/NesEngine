@@ -20,7 +20,6 @@ wxEND_EVENT_TABLE()
 CMemoryDumpFrm::~CMemoryDumpFrm()
 {
 	//TODO memory leak?
-	delete m_MemoryDumpView;
 }
 
 
@@ -52,7 +51,12 @@ CMemoryDumpFrm::CMemoryDumpFrm(wxFrame *parent, const wxString& title, const wxP
 	// ... and attach this menu bar to the frame
 	SetMenuBar(menuBar);
 
-	m_MemoryDumpView = new MemoryDumpView( this );
+	wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
+	vbox->Add(new MemoryDumpViewHeader(this), 0, wxEXPAND, 0);
+	vbox->Add(new MemoryDumpView(this), 1, wxEXPAND, 0);
+
+	SetSizer(vbox);
+
 }
 
 // -----------------
@@ -73,7 +77,133 @@ void CMemoryDumpFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
 
 
 // ----------------------------------------------------------------------------
-// メモリ表示部
+// メモリ表示部 ベース処理
+// ----------------------------------------------------------------------------
+
+template <class T> MemoryDumpViewBase<T>::MemoryDumpViewBase(wxFrame *parent)
+{
+	nDrawMarginX = 0;
+	nDrawMarginY = 0;
+	nBlockSizeX = 24;
+	nBlockSizeY = 16;
+	nFixedLeftMargin = 10;
+	nFixedTopMargin = 3;
+	nFixedLeftWidth = (nBlockSizeX * 2);
+	nFixedTopHeight = nBlockSizeY + 3;
+
+	nViewLeftMargin = 3;
+	nViewTopMargin = 3;
+	nViewLeftStart = nFixedLeftWidth + nViewLeftMargin;
+	//nViewTopStart = nFixedTopHeight + nViewTopMargin;
+	nViewTopStart = nViewTopMargin;
+
+	nHexViewWidth = nViewLeftMargin + (nBlockSizeX * 0x10);
+	nHexViewHeight = nBlockSizeY * 0x1000;
+
+	nViewWidth = nFixedLeftWidth + nHexViewWidth;
+	//nViewHeight = nFixedTopHeight + nHexViewHeight;
+	nViewHeight = nHexViewHeight;
+
+	//font = wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
+	font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
+	fixBkColor = wxColor(220, 230, 241);
+}
+
+template <class T> void MemoryDumpViewBase<T>::DoPaint(wxDC& dc)
+{
+	this->PrepareDC(dc);
+	dc.DrawBitmap(surfaceBmp,0, 0, true);
+}
+
+template <class T> void MemoryDumpViewBase<T>::OnPaint( wxPaintEvent &WXUNUSED(event) )
+{
+	//wxAutoBufferedPaintDC dc(this);
+	wxPaintDC dc(this);
+	DoPaint(dc);
+}
+
+
+template <class T> void MemoryDumpViewBase<T>::WriteByteHex(wxDC& dc, uint8_t b, int col, int row)
+{
+	wxString str;
+	str.Printf(wxT("%02x"), b);
+	WriteStr(dc, str, col, row);
+}
+
+template <class T> void MemoryDumpViewBase<T>::WriteStr(wxDC& dc, wxString str, int col, int row)
+{
+	int x = nViewLeftStart + (nBlockSizeX * col);
+	int y = nViewTopStart + (nBlockSizeY * row);
+	dc.DrawText(str, x, y);
+}
+
+template <class T> void MemoryDumpViewBase<T>::WriteByteHexTopFixView(wxDC& dc, uint8_t b, int col)
+{
+	wxString str;
+	str.Printf(wxT("%02x"), b);
+	WriteStrTopFixView(dc, str, col);
+}
+
+template <class T> void MemoryDumpViewBase<T>::WriteWordHexLeftFixView(wxDC& dc, uint16_t w, int row)
+{
+	wxString str;
+	str.Printf(wxT("%04x"), w);
+	WriteStrLeftFixView(dc, str, row);
+}
+
+template <class T> void MemoryDumpViewBase<T>::WriteStrTopFixView(wxDC& dc, wxString str, int col)
+{
+	int x = nViewLeftStart + (nBlockSizeX * col);
+	int y = nFixedTopMargin + (nBlockSizeY * 0);
+	dc.DrawText(str, x, y);
+}
+
+template <class T> void MemoryDumpViewBase<T>::WriteStrLeftFixView(wxDC& dc, wxString str, int row)
+{
+	int x = nFixedLeftMargin;
+	int y = nViewTopStart + (nBlockSizeY * row);
+	dc.DrawText(str, x, y);
+}
+
+// ----------------------------------------------------------------------------
+// メモリ表示 ヘッダ部
+// ----------------------------------------------------------------------------
+
+wxBEGIN_EVENT_TABLE(MemoryDumpViewHeader, wxWindow)
+	EVT_PAINT(MemoryDumpViewHeader::OnPaint)
+	//EVT_ERASE_BACKGROUND(MyCanvas::OnEraseBackground)
+wxEND_EVENT_TABLE()
+
+MemoryDumpViewHeader::MemoryDumpViewHeader(wxFrame *parent)
+: MemoryDumpViewBase(parent)
+{
+	Create(parent, wxID_ANY, wxDefaultPosition, wxSize(nViewWidth, nFixedTopHeight));
+	surfaceBmp = wxBitmap(nViewWidth, nFixedTopHeight);
+	wxMemoryDC dc(surfaceBmp);
+
+	dc.Clear();
+	DrawFixView(dc);
+
+	//SetSize(nViewWidth, nFixedTopHeight);
+}
+
+void MemoryDumpViewHeader::DrawFixView(wxDC& dc)
+{
+	dc.SetFont(font);
+	dc.SetPen( wxPen( *wxBLACK, 1 ) );
+	dc.SetTextForeground(*wxBLACK);
+
+    dc.SetBrush(fixBkColor);
+    dc.DrawRectangle(0, 0, nViewWidth, nFixedTopHeight);
+
+	for (int i=0; i < 0x10; i++) {
+		WriteByteHexTopFixView(dc, i, i);
+	}
+
+}
+
+// ----------------------------------------------------------------------------
+// メモリ表示 データ部
 // ----------------------------------------------------------------------------
 
 wxBEGIN_EVENT_TABLE(MemoryDumpView, wxScrolledWindow)
@@ -81,62 +211,46 @@ wxBEGIN_EVENT_TABLE(MemoryDumpView, wxScrolledWindow)
 	//EVT_ERASE_BACKGROUND(MyCanvas::OnEraseBackground)
 wxEND_EVENT_TABLE()
 
-
 MemoryDumpView::MemoryDumpView(wxFrame *parent)
+ : MemoryDumpViewBase(parent)
 {
-	Create(parent, wxID_ANY);
-	SetScrollbars( 10, 10, 40, 100, 0, 0 );
+	Create(parent, wxID_ANY, wxDefaultPosition, wxSize(nViewWidth, nViewHeight + 50));
+	SetScrollbars( 0
+			, nBlockSizeY
+			, 40, 0x1000, 0, 0 );
 
 	SetFocusIgnoringChildren();
 	SetBackgroundColour(*wxCYAN);
-
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-	font = wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
-
-	surfaceBmp = wxBitmap(600, 2000);
+	surfaceBmp = wxBitmap(nViewWidth + 50, nViewHeight + 50);
 	wxMemoryDC dc(surfaceBmp);
 	PrepareDC(dc);
 
 	dc.Clear();
-	DrawTopLeft(dc);
+	DrawFixView(dc);
 
 }
 
-
-// -----------------
-// event handlers
-// -----------------
-
-void MemoryDumpView::DoPaint(wxDC& dc)
+void MemoryDumpView::DrawFixView(wxDC& dc)
 {
-	PrepareDC(dc);
-	dc.DrawBitmap(surfaceBmp,0, 0, true);
-
-}
-
-void MemoryDumpView::OnPaint( wxPaintEvent &WXUNUSED(event) )
-{
-	//wxAutoBufferedPaintDC dc(this);
-	wxPaintDC dc(this);
-	DoPaint(dc);
-}
-
-void MemoryDumpView::DrawTopLeft(wxDC& dc)
-{
-
-	PrepareDC(dc);
+	this->PrepareDC(dc);
 	dc.SetFont(font);
 	dc.SetPen( wxPen( *wxBLACK, 1 ) );
 	dc.SetTextForeground(*wxBLACK);
 
-	// x, y
-	dc.DrawLine(5, 5, 5, 100);
+    dc.SetBrush(fixBkColor);
+    dc.DrawRectangle(0, 0, nFixedLeftWidth, nViewHeight);
 
-	wxString str;
-	for (int i = 0; i < 0x10; i++) {
-		str.Printf(wxT("%x"), i);
-		dc.DrawText(str, 11 + (10 * i), 11);
+	for (int i=0; i < 0x1000; i++) {
+		WriteWordHexLeftFixView(dc, i * 0x10, i);
 	}
 
+	for (int j=0; j < 10; j++) {
+		for (int i=0; i < 0x10; i++) {
+			WriteByteHex(dc, i, i, j);
+		}
+	}
 }
+
+
