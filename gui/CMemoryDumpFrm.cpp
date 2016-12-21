@@ -14,6 +14,7 @@
 wxBEGIN_EVENT_TABLE(CMemoryDumpFrm, wxFrame)
 	EVT_MENU(CMemoryDumpFrm_Quit,  CMemoryDumpFrm::OnQuit)
 	EVT_MENU(CMemoryDumpFrm_About, CMemoryDumpFrm::OnAbout)
+	EVT_TIMER(CMemoryDumpFrm_TestTimer, CMemoryDumpFrm::OnTimer)
 wxEND_EVENT_TABLE()
 
 
@@ -26,6 +27,7 @@ CMemoryDumpFrm::~CMemoryDumpFrm()
 // frame constructor
 CMemoryDumpFrm::CMemoryDumpFrm(wxFrame *parent, const wxString& title, const wxPoint& pos, const wxSize& size)
 //	: wxFrame(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(270, 150))
+: m_timer(this, CMemoryDumpFrm_TestTimer)
 {
 	if ( !this->Create(parent, wxID_ANY,
 						title,
@@ -53,10 +55,15 @@ CMemoryDumpFrm::CMemoryDumpFrm(wxFrame *parent, const wxString& title, const wxP
 
 	wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
 	vbox->Add(new MemoryDumpViewHeader(this), 0, wxEXPAND, 0);
-	vbox->Add(new MemoryDumpView(this), 1, wxEXPAND, 0);
+
+	m_MemoryDumpView = new MemoryDumpView(this);
+	vbox->Add(m_MemoryDumpView, 1, wxEXPAND, 0);
 
 	SetSizer(vbox);
 
+
+	m_timer.Start(10);
+	testdata = 0;
 }
 
 // -----------------
@@ -75,6 +82,12 @@ void CMemoryDumpFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
 				 wxT("About Caret"), wxOK | wxICON_INFORMATION, this);
 }
 
+void CMemoryDumpFrm::OnTimer(wxTimerEvent& event)
+{
+	testdata++;
+	m_MemoryDumpView->WriteByteHexTest(testdata, 0, 0);
+
+}
 
 // ----------------------------------------------------------------------------
 // メモリ表示部 ベース処理
@@ -107,7 +120,20 @@ template <class T> MemoryDumpViewBase<T>::MemoryDumpViewBase(wxFrame *parent)
 	//font = wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
 	font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
 	fixBkColor = wxColor(220, 230, 241);
+	viewBkColor = *wxWHITE;
 }
+
+template <class T> void MemoryDumpViewBase<T>::WriteByteHexTest(uint8_t b, int col, int row)
+{
+	wxString str;
+	str.Printf(wxT("%02x"), b);
+
+	wxMemoryDC dc(surfaceBmp);
+	this->PrepareDC(dc);
+	WriteStr(dc, str, col, row);
+	this->Refresh();
+}
+
 
 template <class T> void MemoryDumpViewBase<T>::DoPaint(wxDC& dc)
 {
@@ -122,7 +148,6 @@ template <class T> void MemoryDumpViewBase<T>::OnPaint( wxPaintEvent &WXUNUSED(e
 	DoPaint(dc);
 }
 
-
 template <class T> void MemoryDumpViewBase<T>::WriteByteHex(wxDC& dc, uint8_t b, int col, int row)
 {
 	wxString str;
@@ -134,6 +159,12 @@ template <class T> void MemoryDumpViewBase<T>::WriteStr(wxDC& dc, wxString str, 
 {
 	int x = nViewLeftStart + (nBlockSizeX * col);
 	int y = nViewTopStart + (nBlockSizeY * row);
+
+	dc.SetFont(font);
+	dc.SetPen(*wxWHITE);
+    dc.SetBrush(viewBkColor);
+    dc.DrawRectangle(x, y, nBlockSizeX, nBlockSizeY);
+
 	dc.DrawText(str, x, y);
 }
 
@@ -193,8 +224,8 @@ void MemoryDumpViewHeader::DrawFixView(wxDC& dc)
 	dc.SetPen( wxPen( *wxBLACK, 1 ) );
 	dc.SetTextForeground(*wxBLACK);
 
-    dc.SetBrush(fixBkColor);
-    dc.DrawRectangle(0, 0, nViewWidth, nFixedTopHeight);
+	dc.SetBrush(fixBkColor);
+	dc.DrawRectangle(0, 0, nViewWidth, nFixedTopHeight);
 
 	for (int i=0; i < 0x10; i++) {
 		WriteByteHexTopFixView(dc, i, i);

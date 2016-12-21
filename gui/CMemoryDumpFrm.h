@@ -20,10 +20,14 @@ class MemoryDumpViewBase : public wxCustomBackgroundWindow<T>
 public:
 	MemoryDumpViewBase(wxFrame *parent);
 
+	void WriteByteHexTest(uint8_t b, int col, int row);
+
+
 protected:
 	wxBitmap surfaceBmp;
 	wxFont font;
 	wxColor fixBkColor;
+	wxColor viewBkColor;
 
 	int nFixedLeftMargin;
 	int nFixedTopHeight;
@@ -60,6 +64,7 @@ protected:
 	void WriteStrTopFixView(wxDC& dc, wxString str, int col);
 	void WriteStrLeftFixView(wxDC& dc, wxString str, int row);
 
+
 };
 
 class MemoryDumpViewHeader : public MemoryDumpViewBase<wxScrolledWindow>
@@ -95,12 +100,17 @@ public:
 	// event handlers (these functions should _not_ be virtual)
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
-	void OnSetBlinkTime(wxCommandEvent& event);
-	void OnSetFontSize(wxCommandEvent& event);
-	void OnCaretMove(wxCommandEvent& event);
+//	void OnSetBlinkTime(wxCommandEvent& event);
+//	void OnSetFontSize(wxCommandEvent& event);
+//	void OnCaretMove(wxCommandEvent& event);
+
+	void OnTimer(wxTimerEvent& event);
 
 private:
-	// MemoryDumpView *m_MemoryDumpView;
+	MemoryDumpView *m_MemoryDumpView;
+
+	wxTimer m_timer;
+	uint8_t testdata;
 
 	// any class wishing to process wxWidgets events must use this macro
 	wxDECLARE_EVENT_TABLE();
@@ -117,6 +127,7 @@ enum
     // menu items
     CMemoryDumpFrm_Quit = 1,
 	CMemoryDumpFrm_About,
+	CMemoryDumpFrm_TestTimer,
 };
 
 
