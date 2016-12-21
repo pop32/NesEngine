@@ -2,7 +2,7 @@
  * CNesEngine.h
  *
  *  Created on: 2016/11/22
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #ifndef CNESENGINE_H_

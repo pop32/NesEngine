@@ -2,7 +2,7 @@
  * CPU.h
  *
  *  Created on: 2016/11/21
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #ifndef CCPU_H_

@@ -2,7 +2,7 @@
  * CDecoder.cpp
  *
  *  Created on: 2016/11/25
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #include "CDecoder.h"

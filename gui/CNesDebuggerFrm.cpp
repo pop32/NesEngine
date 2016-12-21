@@ -2,7 +2,7 @@
  * CNesDebugger.cpp
  *
  *  Created on: 2016/12/21
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #include "CNesDebuggerFrm.h"

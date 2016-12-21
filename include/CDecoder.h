@@ -2,7 +2,7 @@
  * CDecoder.h
  *
  *  Created on: 2016/11/25
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #ifndef CDECODER_H_

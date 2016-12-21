@@ -2,7 +2,7 @@
  * CNesEditor.cpp
  *
  *  Created on: 2016/12/21
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #include "CNesEditorFrm.h"
@@ -95,14 +95,27 @@ void CNesEditorFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
 
 template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 {
-	font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
+	m_font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
 	viewBkColor = *wxWHITE;
+
+	wxBitmap bmp(50, 50);
+	wxMemoryDC dc(bmp);
+	dc.SetFont(m_font);
+	m_heightChar = dc.GetCharHeight();
+	m_widthChar = dc.GetCharWidth();
+
+	wxCaret *caret = new wxCaret(this, m_widthChar, m_heightChar);
+	caret->SetSize(m_widthChar, m_heightChar);
+	this->SetCaret(caret);
+	caret->Move(0,0);
+	caret->Show();
+
 }
 
 template <class T> void NesEditorViewBase<T>::DoPaint(wxDC& dc)
 {
 	this->PrepareDC(dc);
-	dc.DrawBitmap(surfaceBmp,0, 0, true);
+	dc.DrawBitmap(m_surfaceBmp,0, 0, true);
 }
 
 template <class T> void NesEditorViewBase<T>::OnPaint( wxPaintEvent &WXUNUSED(event) )
@@ -134,11 +147,16 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	SetBackgroundColour(*wxCYAN);
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-	surfaceBmp = wxBitmap(1024, 5000);
-	wxMemoryDC dc(surfaceBmp);
+	m_surfaceBmp = wxBitmap(1024, 5000);
+	wxMemoryDC dc(m_surfaceBmp);
 	PrepareDC(dc);
 
 	dc.Clear();
+
+	m_text.push_back(new wxString(wxT("abcdeあいうえお")));
+
+	dc.SetFont(m_font);
+	dc.DrawText(*m_text[0], 0, 0);
 
 }
 

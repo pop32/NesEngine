@@ -117,10 +117,10 @@ template <class T> MemoryDumpViewBase<T>::MemoryDumpViewBase(wxFrame *parent)
 	//nViewHeight = nFixedTopHeight + nHexViewHeight;
 	nViewHeight = nHexViewHeight;
 
-	//font = wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
-	font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
-	fixBkColor = wxColor(220, 230, 241);
-	viewBkColor = *wxWHITE;
+	//m_font = wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
+	m_font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
+	m_fixBkColor = wxColor(220, 230, 241);
+	m_viewBkColor = *wxWHITE;
 }
 
 template <class T> void MemoryDumpViewBase<T>::WriteByteHexTest(uint8_t b, int col, int row)
@@ -128,7 +128,7 @@ template <class T> void MemoryDumpViewBase<T>::WriteByteHexTest(uint8_t b, int c
 	wxString str;
 	str.Printf(wxT("%02x"), b);
 
-	wxMemoryDC dc(surfaceBmp);
+	wxMemoryDC dc(m_surfaceBmp);
 	this->PrepareDC(dc);
 	WriteStr(dc, str, col, row);
 	this->Refresh();
@@ -138,7 +138,7 @@ template <class T> void MemoryDumpViewBase<T>::WriteByteHexTest(uint8_t b, int c
 template <class T> void MemoryDumpViewBase<T>::DoPaint(wxDC& dc)
 {
 	this->PrepareDC(dc);
-	dc.DrawBitmap(surfaceBmp,0, 0, true);
+	dc.DrawBitmap(m_surfaceBmp,0, 0, true);
 }
 
 template <class T> void MemoryDumpViewBase<T>::OnPaint( wxPaintEvent &WXUNUSED(event) )
@@ -160,9 +160,9 @@ template <class T> void MemoryDumpViewBase<T>::WriteStr(wxDC& dc, wxString str, 
 	int x = nViewLeftStart + (nBlockSizeX * col);
 	int y = nViewTopStart + (nBlockSizeY * row);
 
-	dc.SetFont(font);
+	dc.SetFont(m_font);
 	dc.SetPen(*wxWHITE);
-	dc.SetBrush(viewBkColor);
+	dc.SetBrush(m_viewBkColor);
 	dc.DrawRectangle(x, y, nBlockSizeX, nBlockSizeY);
 
 	dc.DrawText(str, x, y);
@@ -209,8 +209,8 @@ MemoryDumpViewHeader::MemoryDumpViewHeader(wxFrame *parent)
 : MemoryDumpViewBase(parent)
 {
 	Create(parent, wxID_ANY, wxDefaultPosition, wxSize(nViewWidth, nFixedTopHeight));
-	surfaceBmp = wxBitmap(nViewWidth - 8, nFixedTopHeight);
-	wxMemoryDC dc(surfaceBmp);
+	m_surfaceBmp = wxBitmap(nViewWidth - 8, nFixedTopHeight);
+	wxMemoryDC dc(m_surfaceBmp);
 
 	dc.Clear();
 	DrawFixView(dc);
@@ -220,11 +220,11 @@ MemoryDumpViewHeader::MemoryDumpViewHeader(wxFrame *parent)
 
 void MemoryDumpViewHeader::DrawFixView(wxDC& dc)
 {
-	dc.SetFont(font);
+	dc.SetFont(m_font);
 	dc.SetPen( wxPen( *wxBLACK, 1 ) );
 	dc.SetTextForeground(*wxBLACK);
 
-	dc.SetBrush(fixBkColor);
+	dc.SetBrush(m_fixBkColor);
 	dc.DrawRectangle(0, 0, nViewWidth - 8, nFixedTopHeight);
 
 	for (int i=0; i < 0x10; i++) {
@@ -254,8 +254,8 @@ MemoryDumpView::MemoryDumpView(wxFrame *parent)
 	SetBackgroundColour(*wxCYAN);
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-	surfaceBmp = wxBitmap(nViewWidth + 100, nViewHeight + 50);
-	wxMemoryDC dc(surfaceBmp);
+	m_surfaceBmp = wxBitmap(nViewWidth + 100, nViewHeight + 50);
+	wxMemoryDC dc(m_surfaceBmp);
 	PrepareDC(dc);
 
 	dc.Clear();
@@ -266,11 +266,11 @@ MemoryDumpView::MemoryDumpView(wxFrame *parent)
 void MemoryDumpView::DrawFixView(wxDC& dc)
 {
 	this->PrepareDC(dc);
-	dc.SetFont(font);
+	dc.SetFont(m_font);
 	dc.SetPen( wxPen( *wxBLACK, 1 ) );
 	dc.SetTextForeground(*wxBLACK);
 
-	dc.SetBrush(fixBkColor);
+	dc.SetBrush(m_fixBkColor);
 	dc.DrawRectangle(0, 0, nFixedLeftWidth, nViewHeight + 100);
 
 	for (int i=0; i < 0x1000; i++) {

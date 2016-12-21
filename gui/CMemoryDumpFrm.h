@@ -24,10 +24,10 @@ public:
 
 
 protected:
-	wxBitmap surfaceBmp;
-	wxFont font;
-	wxColor fixBkColor;
-	wxColor viewBkColor;
+	wxBitmap m_surfaceBmp;
+	wxFont m_font;
+	wxColor m_fixBkColor;
+	wxColor m_viewBkColor;
 
 	int nFixedLeftMargin;
 	int nFixedTopHeight;

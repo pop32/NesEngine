@@ -2,7 +2,7 @@
  * debug.h
  *
  *  Created on: 2016/11/25
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #ifdef __DEBUG__

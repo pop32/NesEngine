@@ -2,7 +2,7 @@
  * CCPUExecutor.h
  *
  *  Created on: 2016/11/24
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #ifndef CCPUEXECUTOR_H_

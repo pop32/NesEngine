@@ -2,7 +2,7 @@
  * CNesDebugger.h
  *
  *  Created on: 2016/12/21
- *      Author: z1j7663
+ *      Author: kyon
  */
 
 #ifndef GUI_CNESDEBUGGERFRM_H_
