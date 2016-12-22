@@ -155,7 +155,7 @@ template <class T> void MemoryDumpViewBase<T>::WriteByteHex(wxDC& dc, uint8_t b,
 	WriteStr(dc, str, col, row);
 }
 
-template <class T> void MemoryDumpViewBase<T>::WriteStr(wxDC& dc, wxString str, int col, int row)
+template <class T> void MemoryDumpViewBase<T>::WriteStr(wxDC& dc, wxString& str, int col, int row)
 {
 	int x = nViewLeftStart + (nBlockSizeX * col);
 	int y = nViewTopStart + (nBlockSizeY * row);
@@ -182,14 +182,14 @@ template <class T> void MemoryDumpViewBase<T>::WriteWordHexLeftFixView(wxDC& dc,
 	WriteStrLeftFixView(dc, str, row);
 }
 
-template <class T> void MemoryDumpViewBase<T>::WriteStrTopFixView(wxDC& dc, wxString str, int col)
+template <class T> void MemoryDumpViewBase<T>::WriteStrTopFixView(wxDC& dc, wxString& str, int col)
 {
 	int x = nViewLeftStart + (nBlockSizeX * col);
 	int y = nFixedTopMargin + (nBlockSizeY * 0);
 	dc.DrawText(str, x, y);
 }
 
-template <class T> void MemoryDumpViewBase<T>::WriteStrLeftFixView(wxDC& dc, wxString str, int row)
+template <class T> void MemoryDumpViewBase<T>::WriteStrLeftFixView(wxDC& dc, wxString& str, int row)
 {
 	int x = nFixedLeftMargin;
 	int y = nViewTopStart + (nBlockSizeY * row);

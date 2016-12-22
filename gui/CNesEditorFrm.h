@@ -36,6 +36,7 @@ protected:
 	std::vector<wxString*> m_text;
 
 	// event
+	WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
 	void OnPaint( wxPaintEvent &event );
 	void OnChar(wxKeyEvent &event);
 	void OnKeyDown(wxKeyEvent &event);
@@ -57,6 +58,9 @@ protected:
 
 	void CalcCaretXPosAndWidth();
 	bool IsLastLine();
+
+	void PrintEdittingMultiByteStr(wxString &str);
+	void DrawText(wxDC& dc, wxString& text, wxCoord x, wxCoord y);
 };
 
 

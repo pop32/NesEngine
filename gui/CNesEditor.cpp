@@ -82,16 +82,55 @@ void CNesEditorFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
 			,wxT("About") , wxOK | wxICON_INFORMATION, this);
 }
 
-//void CNesEditorFrm::OnTimer(wxTimerEvent& event)
-//{
-//	testdata++;
-//	m_MemoryDumpView->WriteByteHexTest(testdata, 0, 0);
-//
-//}
 
 // ----------------------------------------------------------------------------
 // テキストエディタ ベース処理
 // ----------------------------------------------------------------------------
+
+template <class T> WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam)
+{
+	WXLRESULT rc = 0;
+	bool processed = false;
+	switch (message) {
+
+#ifdef __WINDOWS__
+
+	case WM_IME_COMPOSITION:
+	{
+		char szBuf[1024];
+		HIMC hImc = ImmGetContext(this->GetHWND());
+
+		// 確定
+		if (lParam & GCS_RESULTSTR) {
+			memset(szBuf, '\0', 1024);
+			ImmGetCompositionString(hImc, GCS_RESULTSTR, szBuf, 1024);
+
+		}
+
+		// 編集中
+		if (lParam & GCS_COMPSTR) {
+			memset(szBuf, '\0', 1024);
+			ImmGetCompositionString(hImc, GCS_COMPSTR, szBuf, 1024);
+		}
+		ImmReleaseContext(this->GetHWND(), hImc);
+		processed = true;
+		break;
+	}
+
+	case WM_IME_NOTIFY:
+	{
+		processed = true;
+		break;
+	}
+#endif
+
+	}
+	if (!processed) {
+		rc = wxCustomBackgroundWindow<T>::MSWWindowProc(message, wParam, lParam);
+	}
+	return rc;
+
+}
 
 template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 {
@@ -177,6 +216,7 @@ template <class T> void NesEditorViewBase<T>::OnKeyDown( wxKeyEvent &event )
 	default:
 		break;
 	}
+	event.Skip();
 }
 
 template <class T> void NesEditorViewBase<T>::DoPaint(wxDC& dc)
@@ -315,6 +355,20 @@ template <class T> bool NesEditorViewBase<T>::IsLastLine()
 	return (m_text.size() < m_yCaret+1);
 }
 
+template <class T> void NesEditorViewBase<T>::PrintEdittingMultiByteStr(wxString &str)
+{
+//	wxMemoryDC dc(m_surfaceBmp);
+//	PrepareDC(dc);
+//	dc.DrawText(str, );
+
+}
+
+template <class T> void NesEditorViewBase<T>::DrawText(wxDC& dc, wxString& text, wxCoord x, wxCoord y)
+{
+	dc.SetFont(m_font);
+	dc.DrawText(text, m_xMargin + x, m_yMargin + y);
+}
+
 // ----------------------------------------------------------------------------
 // テキストエディタ
 // ----------------------------------------------------------------------------
@@ -346,14 +400,8 @@ NesEditorView::NesEditorView(wxFrame *parent)
 
 	m_text.push_back(new wxString(wxT("abcdeあいうえお")));
 
-	dc.SetFont(m_font);
-	dc.DrawText(*m_text[0], m_xMargin, m_yMargin);
+	DrawText(dc, *m_text[0], 0, 0);
 
-//	int a = m_text[0]->length();
-//	int b = m_text[0]->Length();
-//	int c = m_text[0]->Len();
-//	int d = 0;
-	//m_text[0]->
 }
 
 

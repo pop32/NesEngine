@@ -56,13 +56,13 @@ protected:
 	void DoPaint(wxDC& dc);
 
 	void WriteByteHex(wxDC& dc, uint8_t b, int col, int row);
-	void WriteStr(wxDC& dc, wxString str, int col, int row);
+	void WriteStr(wxDC& dc, wxString& str, int col, int row);
 
 	void WriteByteHexTopFixView(wxDC& dc, uint8_t b, int col);
 	void WriteWordHexLeftFixView(wxDC& dc, uint16_t b, int row);
 
-	void WriteStrTopFixView(wxDC& dc, wxString str, int col);
-	void WriteStrLeftFixView(wxDC& dc, wxString str, int row);
+	void WriteStrTopFixView(wxDC& dc, wxString& str, int col);
+	void WriteStrLeftFixView(wxDC& dc, wxString& str, int row);
 
 };
 
