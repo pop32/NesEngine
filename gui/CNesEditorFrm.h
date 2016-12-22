@@ -8,6 +8,7 @@
 #ifndef GUI_CNESEDITORFRM_H_
 #define GUI_CNESEDITORFRM_H_
 
+#include <string>
 #include <vector>
 #include <wx/wxprec.h>
 #include <wx/wx.h>
@@ -28,7 +29,7 @@ protected:
 	wxColor viewBkColor;
 
 	int m_heightChar, m_widthChar;
-	uint32_t m_CharPos;
+	uint32_t m_xCharPos;
 	uint32_t m_xCaret, m_yCaret;
 	uint32_t m_xChars, m_yChars;
 	int m_xMargin, m_yMargin;
@@ -37,6 +38,7 @@ protected:
 	// event
 	void OnPaint( wxPaintEvent &event );
 	void OnChar(wxKeyEvent &event);
+	void OnKeyDown(wxKeyEvent &event);
 	//void OnEraseBackground( wxEraseEvent &event );
 
 	void DoPaint(wxDC& dc);
@@ -51,9 +53,10 @@ protected:
 	void NextChar();
 	void PrevLine();
 	void NextLine();
+	void AddNewLine();
 
-	void CalcCaretPos(wxString &str, int cnt);
-
+	void CalcCaretXPosAndWidth();
+	bool IsLastLine();
 };
 
 

@@ -104,7 +104,7 @@ template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 	m_heightChar = dc.GetCharHeight();
 	m_widthChar = dc.GetCharWidth();
 
-	m_CharPos = 0;
+	m_xCharPos = 0;
 	m_xCaret = m_yCaret = 0;
 	m_xChars = m_yChars = 0;
 	m_xMargin = m_yMargin = 3;
@@ -159,9 +159,24 @@ template <class T> void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
 			break;
 
 		default:
-			event.Skip();
+			if ( !event.AltDown() && wxIsprint(event.GetKeyCode()) ) {
+				//wxChar ch = (wxChar)event.GetKeyCode();
+			} else {
+				event.Skip();
+			}
+
 	}
 	DoMoveCaret();
+}
+
+template <class T> void NesEditorViewBase<T>::OnKeyDown( wxKeyEvent &event )
+{
+	switch ( event.GetKeyCode() )
+	{
+	case WXK_LEFT:
+	default:
+		break;
+	}
 }
 
 template <class T> void NesEditorViewBase<T>::DoPaint(wxDC& dc)
@@ -174,19 +189,24 @@ template <class T> void NesEditorViewBase<T>::DoMoveCaret()
 {
 	this->GetCaret()->Move(m_xMargin + m_xCaret * m_widthChar,
 					 m_yMargin + m_yCaret * m_heightChar);
+	//this->GetCaret()->SetSize(m_widthChar, m_heightChar);
+
 }
 
 template <class T> void NesEditorViewBase<T>::Home()
 {
+	m_xCharPos = 0;
 	m_xCaret = 0;
 }
 
 template <class T> void NesEditorViewBase<T>::End()
 {
-	if (m_text.size() < m_yCaret) {
+	if (IsLastLine()) {
+		m_xCharPos = 0;
 		m_xCaret = 0;
 	} else {
-		m_xCaret = 3;
+		m_xCharPos = m_text[m_yCaret]->length();
+		CalcCaretXPosAndWidth();
 	}
 }
 
@@ -202,29 +222,98 @@ template <class T> void NesEditorViewBase<T>::LastLine()
 
 template <class T> void NesEditorViewBase<T>::PrevChar()
 {
-
+	if (m_xCharPos == 0) {
+		return;
+	}
+	if (IsLastLine()) {
+		m_xCharPos = 0;
+		m_xCaret = 0;
+	} else {
+		m_xCharPos--;
+		CalcCaretXPosAndWidth();
+	}
 }
 
 template <class T> void NesEditorViewBase<T>::NextChar()
 {
-
+	if (IsLastLine()) {
+		m_xCharPos = 0;
+		m_xCaret = 0;
+	} else {
+		int tcnt = m_text[m_yCaret]->length();
+		if (m_text[m_yCaret]->length() <= m_xCharPos) {
+			m_xCharPos = tcnt;
+		} else {
+			m_xCharPos++;
+		}
+		CalcCaretXPosAndWidth();
+	}
 }
 
 template <class T> void NesEditorViewBase<T>::PrevLine()
 {
-
+	if (m_yCaret == 0) {
+		return;
+	}
+	m_yCaret--;
+	int tcnt = m_text[m_yCaret]->length();
+	if (m_text[m_yCaret]->length() <= m_xCharPos) {
+		m_xCharPos = tcnt;
+	}
+	CalcCaretXPosAndWidth();
 }
 
 template <class T> void NesEditorViewBase<T>::NextLine()
 {
-
+	if (IsLastLine()) {
+		m_xCharPos = 0;
+		m_xCaret = 0;
+		m_yCaret = m_text.size();
+	} else {
+		m_yCaret++;
+		if (IsLastLine()) {
+			m_xCharPos = 0;
+			m_xCaret = 0;
+			m_yCaret = m_text.size();
+			return;
+		}
+		int tcnt = m_text[m_yCaret]->length();
+		if (m_text[m_yCaret]->length() <= m_xCharPos) {
+			m_xCharPos = tcnt;
+		}
+		CalcCaretXPosAndWidth();
+	}
 }
 
-template <class T> void NesEditorViewBase<T>::CalcCaretPos()
+template <class T> void NesEditorViewBase<T>::AddNewLine()
 {
 
 }
 
+template <class T> void NesEditorViewBase<T>::CalcCaretXPosAndWidth()
+{
+	m_xCaret = 0;
+	if (IsLastLine()) {
+		return;
+	} else {
+		wxString::const_iterator s;
+		wxString &str = *m_text[m_yCaret];
+		s = str.begin();
+		for (uint32_t i=0; i < m_xCharPos; ++i, ++s) {
+			wxUniChar uni_ch = *s;
+			if (uni_ch.IsAscii()) {
+				m_xCaret++;
+			} else {
+				m_xCaret+=2;
+			}
+		}
+	}
+}
+
+template <class T> bool NesEditorViewBase<T>::IsLastLine()
+{
+	return (m_text.size() < m_yCaret+1);
+}
 
 // ----------------------------------------------------------------------------
 // テキストエディタ
@@ -233,6 +322,7 @@ template <class T> void NesEditorViewBase<T>::CalcCaretPos()
 wxBEGIN_EVENT_TABLE(NesEditorView, wxScrolledWindow)
 	EVT_PAINT(NesEditorView::OnPaint)
 	EVT_CHAR(NesEditorView::OnChar)
+	EVT_KEY_DOWN(NesEditorView::OnKeyDown)
 	//EVT_ERASE_BACKGROUND(MyCanvas::OnEraseBackground)
 wxEND_EVENT_TABLE()
 
@@ -259,10 +349,10 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	dc.SetFont(m_font);
 	dc.DrawText(*m_text[0], m_xMargin, m_yMargin);
 
-	int a = m_text[0]->length();
-	int b = m_text[0]->Length();
-	int c = m_text[0]->Len();
-	int d = 0;
+//	int a = m_text[0]->length();
+//	int b = m_text[0]->Length();
+//	int c = m_text[0]->Len();
+//	int d = 0;
 	//m_text[0]->
 }
 
