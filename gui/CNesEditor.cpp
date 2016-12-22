@@ -97,20 +97,23 @@ template <class T> WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message,
 
 	case WM_IME_COMPOSITION:
 	{
-		char szBuf[1024];
+		wchar_t szBuf[1024];
 		HIMC hImc = ImmGetContext(this->GetHWND());
+
+		// TODO IMEの変換するやつが出る場所
 
 		// 確定
 		if (lParam & GCS_RESULTSTR) {
 			memset(szBuf, '\0', 1024);
-			ImmGetCompositionString(hImc, GCS_RESULTSTR, szBuf, 1024);
-
+			ImmGetCompositionStringW(hImc, GCS_RESULTSTR, szBuf, 1024);
 		}
 
 		// 編集中
 		if (lParam & GCS_COMPSTR) {
 			memset(szBuf, '\0', 1024);
-			ImmGetCompositionString(hImc, GCS_COMPSTR, szBuf, 1024);
+			ImmGetCompositionStringW(hImc, GCS_COMPSTR, szBuf, 1024);
+			wxString str = szBuf;
+			PrintEdittingMultiByteStr(str);
 		}
 		ImmReleaseContext(this->GetHWND(), hImc);
 		processed = true;
@@ -135,6 +138,7 @@ template <class T> WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message,
 template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 {
 	m_font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
+	m_fontEditting = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, true);
 	viewBkColor = *wxWHITE;
 
 	wxBitmap bmp(50, 50);
@@ -156,11 +160,17 @@ template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 
 }
 
-template <class T> void NesEditorViewBase<T>::OnPaint( wxPaintEvent &WXUNUSED(event) )
+template <class T> void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
 {
-	//wxAutoBufferedPaintDC dc(this);
 	wxPaintDC dc(this);
-	DoPaint(dc);
+	this->PrepareDC(dc);
+	wxRegionIterator upd(this->GetUpdateRegion());
+
+	while (upd) {
+		wxRect rect(upd.GetRect());
+		dc.Blit(rect.GetLeftTop(), rect.GetSize(), &m_dc, rect.GetLeftTop());
+		upd++;
+	}
 }
 
 template <class T> void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
@@ -217,12 +227,6 @@ template <class T> void NesEditorViewBase<T>::OnKeyDown( wxKeyEvent &event )
 		break;
 	}
 	event.Skip();
-}
-
-template <class T> void NesEditorViewBase<T>::DoPaint(wxDC& dc)
-{
-	this->PrepareDC(dc);
-	dc.DrawBitmap(m_surfaceBmp,0, 0, true);
 }
 
 template <class T> void NesEditorViewBase<T>::DoMoveCaret()
@@ -350,6 +354,22 @@ template <class T> void NesEditorViewBase<T>::CalcCaretXPosAndWidth()
 	}
 }
 
+template <class T> uint32_t NesEditorViewBase<T>::GetStringWidth(wxString& str)
+{
+	uint32_t ret = 0;
+	wxString::const_iterator s;
+	for (s = str.begin(); s != str.end(); s++) {
+		wxUniChar uni_ch = *s;
+		if (uni_ch.IsAscii()) {
+			ret+=m_widthChar;
+		} else {
+			ret+=m_widthChar * 2;
+		}
+	}
+	return ret;
+}
+
+
 template <class T> bool NesEditorViewBase<T>::IsLastLine()
 {
 	return (m_text.size() < m_yCaret+1);
@@ -357,16 +377,25 @@ template <class T> bool NesEditorViewBase<T>::IsLastLine()
 
 template <class T> void NesEditorViewBase<T>::PrintEdittingMultiByteStr(wxString &str)
 {
-//	wxMemoryDC dc(m_surfaceBmp);
-//	PrepareDC(dc);
-//	dc.DrawText(str, );
-
+	DrawText(m_fontEditting, str, m_xCaret, m_yCaret);
 }
 
-template <class T> void NesEditorViewBase<T>::DrawText(wxDC& dc, wxString& text, wxCoord x, wxCoord y)
+template <class T> void NesEditorViewBase<T>::DrawText(wxFont& font, wxString& str, wxCoord col, wxCoord row)
 {
-	dc.SetFont(m_font);
-	dc.DrawText(text, m_xMargin + x, m_yMargin + y);
+	m_dc.SetFont(font);
+	DrawText(str, col, row);
+}
+
+template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row)
+{
+	// TODO 配色
+	this->PrepareDC(m_dc);
+	m_dc.SetPen(*wxWHITE);
+	m_dc.SetBrush(*wxWHITE);
+	m_dc.DrawRectangle(m_xMargin, m_xMargin + (row * m_heightChar)
+			, GetStringWidth(str), m_heightChar);
+	m_dc.DrawText(str, m_xMargin + (col * m_widthChar), m_yMargin + (row * m_heightChar));
+	this->Refresh();
 }
 
 // ----------------------------------------------------------------------------
@@ -392,16 +421,14 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	SetBackgroundColour(*wxCYAN);
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-	m_surfaceBmp = wxBitmap(1024, 5000);
-	wxMemoryDC dc(m_surfaceBmp);
-	PrepareDC(dc);
+	wxBitmap bmp = wxBitmap(parent->GetSize());
+	m_dc.SelectObject(bmp);
+	PrepareDC(m_dc);
+	m_dc.Clear();
 
-	dc.Clear();
-
+	//TODO テスト
 	m_text.push_back(new wxString(wxT("abcdeあいうえお")));
-
-	DrawText(dc, *m_text[0], 0, 0);
-
+	DrawText(m_font, *m_text[0], 0, 0);
 }
 
 

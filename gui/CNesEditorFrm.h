@@ -24,8 +24,9 @@ public:
 	NesEditorViewBase(wxFrame *parent);
 
 protected:
-	wxBitmap m_surfaceBmp;
+	wxMemoryDC m_dc;
 	wxFont m_font;
+	wxFont m_fontEditting;
 	wxColor viewBkColor;
 
 	int m_heightChar, m_widthChar;
@@ -42,10 +43,8 @@ protected:
 	void OnKeyDown(wxKeyEvent &event);
 	//void OnEraseBackground( wxEraseEvent &event );
 
-	void DoPaint(wxDC& dc);
-	void DoMoveCaret();
-
 	// キャレット操作
+	void DoMoveCaret();
 	void Home();
 	void End();
 	void FirstLine();
@@ -57,10 +56,12 @@ protected:
 	void AddNewLine();
 
 	void CalcCaretXPosAndWidth();
+	uint32_t GetStringWidth(wxString& str);
 	bool IsLastLine();
 
 	void PrintEdittingMultiByteStr(wxString &str);
-	void DrawText(wxDC& dc, wxString& text, wxCoord x, wxCoord y);
+	void DrawText(wxString& text, wxCoord col, wxCoord row);
+	void DrawText(wxFont& font, wxString& text, wxCoord col, wxCoord row);
 };
 
 
