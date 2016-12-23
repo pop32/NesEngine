@@ -575,6 +575,24 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	m_text.push_back(new wxString(wxT("abcdeあいうえお")));
 	DrawText(m_font, *m_text[0], 0, 0);
 
+
+	//auto text = std::unique_ptr<wxString>(new wxString(wxString(wxT("aaa"))));
+	m_text2.push_back(std::unique_ptr<wxString>(new wxString(wxString(wxT("aaa")))));
+	m_text2.push_back(std::unique_ptr<wxString>(new wxString(wxString(wxT("bbb")))));
+
+	int i = 1;
+	for (auto const& text : m_text2) {
+		//wxString x = text;
+		//std::move(text);
+		DrawText(m_font, *(text.get()), 0, i);
+		i++;
+	}
+
+	m_test.push_back(std::unique_ptr<CSmartPointerTest>(new CSmartPointerTest()));
+	m_test.pop_back();
+
+
+
 }
 
 

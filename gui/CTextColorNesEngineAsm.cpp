@@ -18,4 +18,11 @@ CTextColorNesEngineAsm::~CTextColorNesEngineAsm() {
 	// TODO Auto-generated destructor stub
 }
 
+
+CTextColorNesEngineAsm& CTextColorNesEngineAsm::operator=(wxString& str)
+{
+
+	return *this;
+}
+
 } /* namespace NesEngine */

@@ -27,6 +27,7 @@
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1728799840" name="定義済みのシンボル (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HAVE_STDINT_H"/>
 									<listOptionValue builtIn="false" value="__DEBUG__"/>
+									<listOptionValue builtIn="false" value="__cplusplus=201103L"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.include.paths.326542651" name="インクルード・パス (-I)" superClass="gnu.cpp.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/nesengine/include}&quot;"/>

@@ -10,12 +10,15 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <wx/wxprec.h>
 #include <wx/wx.h>
 #include <wx/custombgwin.h>
 #include <wx/dcbuffer.h>
 #include <wx/chartype.h>
 #include <wx/caret.h>
+
+#include "CSmartPointerTest.h"
 
 using namespace std;
 
@@ -39,6 +42,8 @@ protected:
 	uint32_t m_xChars, m_yChars;
 	int m_xMargin, m_yMargin;
 	vector<wxString*> m_text;
+	vector<std::unique_ptr<wxString>> m_text2;
+	vector<std::unique_ptr<CSmartPointerTest>> m_test;
 
 	// event
 	WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
