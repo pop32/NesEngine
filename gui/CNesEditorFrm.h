@@ -56,7 +56,8 @@ protected:
 	void AddNewLine();
 
 	void CalcCaretXPosAndWidth();
-	uint32_t GetStringWidth(wxString& str);
+	uint32_t GetStringPixelWidth(wxString& str);
+	wxPoint GetCaretPixelPoint();
 	bool IsLastLine();
 
 	void PrintEdittingMultiByteStr(wxString &str);

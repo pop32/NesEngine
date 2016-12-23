@@ -100,7 +100,7 @@ template <class T> WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message,
 		wchar_t szBuf[1024];
 		HIMC hImc = ImmGetContext(this->GetHWND());
 
-		// TODO IMEの変換するやつが出る場所
+		// TODO 複数単語変換処理
 
 		// 確定
 		if (lParam & GCS_RESULTSTR) {
@@ -122,6 +122,20 @@ template <class T> WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message,
 
 	case WM_IME_NOTIFY:
 	{
+		switch (wParam) {
+		// 候補文字列ウィンドウ
+		case IMN_OPENCANDIDATE:
+			HIMC hImc = ImmGetContext(this->GetHWND());
+			CANDIDATEFORM cndFrm = {0};
+			wxRect rect = this->GetClientRect();
+			wxPoint point = GetCaretPixelPoint();
+			cndFrm.ptCurrentPos.x = rect.GetLeft() + point.x;
+			cndFrm.ptCurrentPos.y = rect.GetTop() + point.y;
+			cndFrm.dwStyle = CFS_CANDIDATEPOS;  // 候補文字ウィンドウ位置指定
+			ImmSetCandidateWindow(hImc, &cndFrm);
+			ImmReleaseContext(this->GetHWND(), hImc);
+
+		}
 		processed = true;
 		break;
 	}
@@ -354,7 +368,7 @@ template <class T> void NesEditorViewBase<T>::CalcCaretXPosAndWidth()
 	}
 }
 
-template <class T> uint32_t NesEditorViewBase<T>::GetStringWidth(wxString& str)
+template <class T> uint32_t NesEditorViewBase<T>::GetStringPixelWidth(wxString& str)
 {
 	uint32_t ret = 0;
 	wxString::const_iterator s;
@@ -369,6 +383,13 @@ template <class T> uint32_t NesEditorViewBase<T>::GetStringWidth(wxString& str)
 	return ret;
 }
 
+template <class T> wxPoint NesEditorViewBase<T>::GetCaretPixelPoint()
+{
+	wxPoint p;
+	p.x = m_xMargin + (m_xCaret * m_widthChar);
+	p.y = m_yMargin + (m_yCaret * m_heightChar);
+	return p;
+}
 
 template <class T> bool NesEditorViewBase<T>::IsLastLine()
 {
@@ -393,7 +414,7 @@ template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord co
 	m_dc.SetPen(*wxWHITE);
 	m_dc.SetBrush(*wxWHITE);
 	m_dc.DrawRectangle(m_xMargin, m_xMargin + (row * m_heightChar)
-			, GetStringWidth(str), m_heightChar);
+			, GetStringPixelWidth(str), m_heightChar);
 	m_dc.DrawText(str, m_xMargin + (col * m_widthChar), m_yMargin + (row * m_heightChar));
 	this->Refresh();
 }
@@ -429,6 +450,8 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	//TODO テスト
 	m_text.push_back(new wxString(wxT("abcdeあいうえお")));
 	DrawText(m_font, *m_text[0], 0, 0);
+
+
 }
 
 
