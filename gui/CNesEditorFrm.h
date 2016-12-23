@@ -18,8 +18,6 @@
 #include <wx/chartype.h>
 #include <wx/caret.h>
 
-#include "CSmartPointerTest.h"
-
 using namespace std;
 
 namespace NesEngine {
@@ -41,9 +39,7 @@ protected:
 	uint32_t m_xCaret, m_yCaret;
 	uint32_t m_xChars, m_yChars;
 	int m_xMargin, m_yMargin;
-	vector<wxString*> m_text;
-	vector<std::unique_ptr<wxString>> m_text2;
-	vector<std::unique_ptr<CSmartPointerTest>> m_test;
+	vector<std::unique_ptr<wxString>> m_text;
 
 	// event
 	WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);

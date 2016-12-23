@@ -404,9 +404,10 @@ template <class T> void NesEditorViewBase<T>::NextLine()
 template <class T> void NesEditorViewBase<T>::AddNewLine()
 {
 	if (IsLastLine()) {
-		m_text.push_back(new wxString(wxT("")));
+		m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT(""))));
 	} else {
-		m_text.insert(m_text.begin() + m_yCaret+1, new wxString(wxT("")));
+		m_text.insert(m_text.begin() + m_yCaret+1,
+				std::unique_ptr<wxString>(new wxString(wxT(""))));
 	}
 	DrawTextLine(m_yCaret);
 }
@@ -514,7 +515,8 @@ template <class T> void NesEditorViewBase<T>::DrawTextLine(wxCoord startRow)
 	// TODO 配色
 	int i = 0;
 	for(auto ite = m_text.begin() + startRow; ite != m_text.end(); ite++) {
-		wxString* str = *ite;
+		//wxString* str = *ite;
+		wxString* str = (*ite).get();
 		DrawText(m_font, *str, 0, startRow + i);
 		i++;
 	}
@@ -571,27 +573,8 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	PrepareDC(m_dc);
 	m_dc.Clear();
 
-	//TODO テスト
-	m_text.push_back(new wxString(wxT("abcdeあいうえお")));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcdeあいうえお"))));
 	DrawText(m_font, *m_text[0], 0, 0);
-
-
-	//auto text = std::unique_ptr<wxString>(new wxString(wxString(wxT("aaa"))));
-	m_text2.push_back(std::unique_ptr<wxString>(new wxString(wxString(wxT("aaa")))));
-	m_text2.push_back(std::unique_ptr<wxString>(new wxString(wxString(wxT("bbb")))));
-
-	int i = 1;
-	for (auto const& text : m_text2) {
-		//wxString x = text;
-		//std::move(text);
-		DrawText(m_font, *(text.get()), 0, i);
-		i++;
-	}
-
-	m_test.push_back(std::unique_ptr<CSmartPointerTest>(new CSmartPointerTest()));
-	m_test.pop_back();
-
-
 
 }
 
