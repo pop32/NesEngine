@@ -14,6 +14,8 @@
 #include "CMemoryDumpFrm.h"
 #include "CNesEditorFrm.h"
 
+namespace NesEngine {
+
 class CMainFrm : public wxFrame {
 public:
 	CMainFrm(const wxString& title, const wxPoint& pos, const wxSize& size);
@@ -46,5 +48,6 @@ enum
 	CMainFrm_NesEditor,
 };
 
+} /* namespace NesEngine */
 
 #endif /* GUI_CMAINFRM_H_ */

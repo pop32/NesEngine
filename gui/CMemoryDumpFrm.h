@@ -14,6 +14,10 @@
 #include <wx/dcbuffer.h>
 #include <wx/chartype.h>
 
+
+namespace NesEngine {
+
+
 template <class T>
 class MemoryDumpViewBase : public wxCustomBackgroundWindow<T>
 {
@@ -128,5 +132,6 @@ enum
 	CMemoryDumpFrm_TestTimer,
 };
 
+} /* namespace NesEngine */
 
 #endif /* GUI_CMEMORYDUMPFRM_H_ */

@@ -7,6 +7,9 @@
 
 #include "CMemoryDumpFrm.h"
 
+namespace NesEngine {
+
+
 // ----------------------------------------------------------------------------
 // メインフレーム
 // ----------------------------------------------------------------------------
@@ -284,4 +287,5 @@ void MemoryDumpView::DrawFixView(wxDC& dc)
 	}
 }
 
+} /* namespace NesEngine */
 

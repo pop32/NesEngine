@@ -8,6 +8,7 @@
 #include "CNesEditorFrm.h"
 
 
+namespace NesEngine {
 
 // ----------------------------------------------------------------------------
 // メインフレーム
@@ -574,7 +575,7 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	m_text.push_back(new wxString(wxT("abcdeあいうえお")));
 	DrawText(m_font, *m_text[0], 0, 0);
 
-
 }
 
 
+} /* namespace NesEngine */

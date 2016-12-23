@@ -19,6 +19,8 @@
 
 using namespace std;
 
+namespace NesEngine {
+
 template <class T>
 class NesEditorViewBase : public wxCustomBackgroundWindow<T>
 {
@@ -116,5 +118,6 @@ enum
 	CNesEditorFrm_TestTimer,
 };
 
+} /* namespace NesEngine */
 
 #endif /* GUI_CNESEDITORFRM_H_ */

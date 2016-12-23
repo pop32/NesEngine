@@ -1,21 +1,20 @@
 /*
- * CNesDebugger.cpp
+ * CTextColorNesEngineAsm.cpp
  *
- *  Created on: 2016/12/21
+ *  Created on: 2016/12/24
  *      Author: kyon
  */
 
-#include "CNesDebuggerFrm.h"
+#include "CTextColorNesEngineAsm.h"
 
 namespace NesEngine {
 
-
-CNesDebuggerFrm::CNesDebuggerFrm() {
+CTextColorNesEngineAsm::CTextColorNesEngineAsm() {
 	// TODO 自動生成されたコンストラクター・スタブ
 
 }
 
-CNesDebuggerFrm::~CNesDebuggerFrm() {
+CTextColorNesEngineAsm::~CTextColorNesEngineAsm() {
 	// TODO Auto-generated destructor stub
 }
 

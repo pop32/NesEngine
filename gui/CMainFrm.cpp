@@ -7,6 +7,8 @@
 
 #include "CMainFrm.h"
 
+namespace NesEngine {
+
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
@@ -81,8 +83,10 @@ void CMainFrm::OnMemoryDump(wxCommandEvent& WXUNUSED(event))
 void CMainFrm::OnNesEditor(wxCommandEvent& WXUNUSED(event))
 {
 	// TODO memory leak ???
-	CNesEditorFrm *frm = new CNesEditorFrm(this, wxT("Nes Editor"),
+	NesEngine::CNesEditorFrm *frm = new NesEngine::CNesEditorFrm(this, wxT("Nes Editor"),
 						wxPoint(50, 50), wxSize(650, 440));
 	frm->Show(TRUE);
 
 }
+
+} /* namespace NesEngine */
