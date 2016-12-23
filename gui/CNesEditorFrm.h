@@ -17,6 +17,8 @@
 #include <wx/chartype.h>
 #include <wx/caret.h>
 
+using namespace std;
+
 template <class T>
 class NesEditorViewBase : public wxCustomBackgroundWindow<T>
 {
@@ -34,7 +36,7 @@ protected:
 	uint32_t m_xCaret, m_yCaret;
 	uint32_t m_xChars, m_yChars;
 	int m_xMargin, m_yMargin;
-	std::vector<wxString*> m_text;
+	vector<wxString*> m_text;
 
 	// event
 	WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
@@ -42,6 +44,9 @@ protected:
 	void OnChar(wxKeyEvent &event);
 	void OnKeyDown(wxKeyEvent &event);
 	//void OnEraseBackground( wxEraseEvent &event );
+
+	// キーボード操作
+	void DoKeyEnter();
 
 	// キャレット操作
 	void DoMoveCaret();
@@ -60,7 +65,13 @@ protected:
 	wxPoint GetCaretPixelPoint();
 	bool IsLastLine();
 
+
+	// テキスト操作
+	void InsertStr(wxChar ch);
+	void InsertStr(wxString& str);
+
 	void PrintEdittingMultiByteStr(wxString &str);
+	void DrawTextLine(wxCoord startRow);
 	void DrawText(wxString& text, wxCoord col, wxCoord row);
 	void DrawText(wxFont& font, wxString& text, wxCoord col, wxCoord row);
 };
