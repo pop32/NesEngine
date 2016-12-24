@@ -37,18 +37,18 @@ void CTextColorBase::Analyze(const wxString& str)
 //}
 
 
-void CTextColorBase::SkipSpace(wxString& str, wxString::const_iterator& ite)
+void CTextColorBase::AddSpace(wxString& str, wxString::const_iterator& ite)
 {
 
-	for(ite = str.begin(); ite != str.end(); ite++) {
-		wchar_t uni_ch = *ite;
-		switch (uni_ch) {
-		case L' ':
-		case L'\t':
-			int a = 0;
-			break;
-		}
+	std::unique_ptr<CTextColorAnalyzedVal> analyzed =
+			std::unique_ptr<CTextColorAnalyzedVal>(new CTextColorAnalyzedVal());
+	CTextColorAnalyzedVal& aVal = *analyzed.get();
+	aVal.m_syntax = CTextColorAnalyzedVal::COMMENT;
+	for(; ite != str.end(); ite++) {
+
+		aVal.m_text += *ite;
 	}
+	m_analysedVal.push_back(std::move(analyzed));
 
 }
 

@@ -426,7 +426,7 @@ template <class T> void NesEditorViewBase<T>::CalcCaretXPosAndWidth()
 		wxString::const_iterator s;
 		wxString &str = *m_text[m_yCaret];
 		s = str.begin();
-		for (uint32_t i=0; i < m_xCharPos; ++i, ++s) {
+		for (size_t i=0; i < m_xCharPos; ++i, ++s) {
 			wxUniChar uni_ch = *s;
 			if (uni_ch.IsAscii()) {
 				m_xCaret++;
@@ -435,24 +435,6 @@ template <class T> void NesEditorViewBase<T>::CalcCaretXPosAndWidth()
 			}
 		}
 	}
-}
-
-/**
- * キャレットを次の行へ
- */
-template <class T> uint32_t NesEditorViewBase<T>::GetStringPixelWidth(wxString& str)
-{
-	uint32_t ret = 0;
-	wxString::const_iterator s;
-	for (s = str.begin(); s != str.end(); s++) {
-		wxUniChar uni_ch = *s;
-		if (uni_ch.IsAscii()) {
-			ret+=m_widthChar;
-		} else {
-			ret+=m_widthChar * 2;
-		}
-	}
-	return ret;
 }
 
 /**
@@ -497,9 +479,36 @@ template <class T> void NesEditorViewBase<T>::InsertStr(wxString& str)
 	text.insert(m_xCharPos, str);
 	m_xCharPos += str.length();
 	CalcCaretXPosAndWidth();
-	DrawText(m_font, text, 0, m_yCaret);
+	DrawText(text, 0, m_yCaret);
 
 }
+
+/**
+ * 文字の横幅計算
+ */
+template <class T> size_t NesEditorViewBase<T>::GetStringPixelWidth(wxString& str)
+{
+	size_t ret = 0;
+	wxString::const_iterator s;
+	for (s = str.begin(); s != str.end(); s++) {
+		wxUniChar uni_ch = *s;
+		if (uni_ch.IsAscii()) {
+			ret+=m_widthChar;
+		} else {
+			ret+=m_widthChar * 2;
+		}
+	}
+	return ret;
+}
+
+/**
+ * 文字長計算（バイト考慮）
+ */
+template <class T> size_t NesEditorViewBase<T>::GetStringBLen(wxString& str)
+{
+	return 0;
+}
+
 
 // ------------------------------
 // 描画関連
@@ -508,39 +517,58 @@ template <class T> void NesEditorViewBase<T>::InsertStr(wxString& str)
 
 template <class T> void NesEditorViewBase<T>::PrintEdittingMultiByteStr(wxString &str)
 {
-	DrawText(m_fontEditting, str, m_xCaret, m_yCaret);
+	//DrawText(str, m_xCaret, m_yCaret, false);
 }
 
 template <class T> void NesEditorViewBase<T>::DrawTextLine(wxCoord startRow)
 {
-	// TODO 配色
 	int i = 0;
 	for(auto ite = m_text.begin() + startRow; ite != m_text.end(); ite++) {
-		//wxString* str = *ite;
 		wxString* str = (*ite).get();
-		DrawText(m_font, *str, 0, startRow + i);
+		DrawText(*str, 0, startRow + i);
 		i++;
 	}
-
-}
-
-template <class T> void NesEditorViewBase<T>::DrawText(wxFont& font, wxString& str, wxCoord col, wxCoord row)
-{
-	// TODO 配色
-	m_dc.SetFont(font);
-	DrawText(str, col, row);
 }
 
 template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row)
 {
-	// TODO 配色
 	this->PrepareDC(m_dc);
 	m_dc.SetPen(*wxWHITE);
 	m_dc.SetBrush(*wxWHITE);
 	wxSize s = this->GetSize();
 	m_dc.DrawRectangle(0, m_yMargin + (row * m_heightChar)
 			, s.GetWidth(), m_heightChar);
-	m_dc.DrawText(str, m_xMargin + (col * m_widthChar), m_yMargin + (row * m_heightChar));
+
+	m_dc.SetFont(m_font);
+	m_dc.SetTextBackground(*wxWHITE);
+	//m_dc.SetTextForeground(*wxGREEN);
+	int x = col;
+	wxColor colorFore;
+	m_syntaxAnalyzer.get()->Analyze(str);
+	std::vector<std::unique_ptr<CTextColorAnalyzedVal>>& lst = m_syntaxAnalyzer.get()->GetAnalyzedVal();
+	for (const auto& v : lst) {
+		switch (v.get()->m_syntax) {
+		case CTextColorAnalyzedVal::COMMENT:
+			colorFore = *wxGREEN;
+			break;
+		case CTextColorAnalyzedVal::RESERVED:
+			colorFore = *wxRED;
+			break;
+
+		case CTextColorAnalyzedVal::STRRING:
+			colorFore = *wxYELLOW;
+			break;
+
+		case CTextColorAnalyzedVal::UNDEDF:
+		default:
+			colorFore = *wxBLACK;
+			break;
+		}
+		m_dc.SetTextForeground(colorFore);
+		wxString& s = v.get()->m_text;
+		m_dc.DrawText(s, m_xMargin + (x * m_widthChar), m_yMargin + (row * m_heightChar));
+		x += GetStringBLen(s);
+	}
 	this->Refresh();
 }
 
@@ -574,28 +602,29 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	PrepareDC(m_dc);
 	m_dc.Clear();
 
+	m_syntaxAnalyzer = std::unique_ptr<CTextColorBase>(new CTextColorNesEngineAsm());
 
 	//TODO ↓↓TEST↓↓
-	CTextColorNesEngineAsm tasm;
-	wxString aaa = wxT("aaaa;bbbb");
-	//tasm.operator=(aaa);
-	tasm.Analyze(aaa);
+//	CTextColorNesEngineAsm tasm;
+//	wxString aaa = wxT("aaaa;bbbb");
+//	//tasm.operator=(aaa);
+//	tasm.Analyze(aaa);
+//
+//	std::vector<std::unique_ptr<CTextColorAnalyzedVal>>& abc = tasm.GetAnalyzedVal();
+//	int a = abc.size();
+//	for (const auto& v : abc) {
+//		wxString &abc = v.get()->m_text;
+//		wxString::const_iterator test = abc.begin();
+//		for(; test != abc.end(); test++) {
+//			wchar_t uni_ch = *test;
+//			int a = 0;
+//		}
+//
+//		DrawText(m_font, v.get()->m_text, 0, 0);
+//	}
 
-	std::vector<std::unique_ptr<CTextColorAnalyzedVal>>& abc = tasm.GetAnalyzedVal();
-	int a = abc.size();
-	for (const auto& v : abc) {
-		wxString &abc = v.get()->m_text;
-		wxString::const_iterator test = abc.begin();
-		for(; test != abc.end(); test++) {
-			wchar_t uni_ch = *test;
-			int a = 0;
-		}
-
-		DrawText(m_font, v.get()->m_text, 0, 0);
-	}
-
-	//m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcdeあいうえお"))));
-	//DrawText(m_font, *m_text[0], 0, 0);
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcdeあいうえお;aaaa\taaa"))));
+	DrawText(*m_text[0], 0, 0);
 	//TODO ↑↑EST↑↑
 
 }

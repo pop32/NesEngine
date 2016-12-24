@@ -36,7 +36,7 @@ protected:
 	std::vector<std::unique_ptr<CTextColorAnalyzedVal>> m_analysedVal;
 	virtual void AnalyzeSub(const wxString& str, wxString::const_iterator& ite) = 0;
 
-	void SkipSpace(wxString& str, wxString::const_iterator& ite);
+	void AddSpace(wxString& str, wxString::const_iterator& ite);
 	void AddSyntaxCommentToEol(const wxString& str, wxString::const_iterator& ite);
 };
 

@@ -17,6 +17,7 @@
 #include <wx/dcbuffer.h>
 #include <wx/chartype.h>
 #include <wx/caret.h>
+#include "CTextColorBase.h"
 #include "CTextColorNesEngineAsm.h"
 
 using namespace std;
@@ -38,11 +39,13 @@ protected:
 	wxColor viewBkColor;
 
 	int m_heightChar, m_widthChar;
-	uint32_t m_xCharPos;
-	uint32_t m_xCaret, m_yCaret;
-	uint32_t m_xChars, m_yChars;
+	size_t m_xCharPos;
+	size_t m_xCaret, m_yCaret;
+	size_t m_xChars, m_yChars;
 	int m_xMargin, m_yMargin;
+	std::unique_ptr<CTextColorBase> m_syntaxAnalyzer;
 	vector<std::unique_ptr<wxString>> m_text;
+
 
 	// event
 	WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);
@@ -67,7 +70,8 @@ protected:
 	void AddNewLine();
 
 	void CalcCaretXPosAndWidth();
-	uint32_t GetStringPixelWidth(wxString& str);
+	size_t GetStringPixelWidth(wxString& str);
+	size_t GetStringBLen(wxString& str);
 	wxPoint GetCaretPixelPoint();
 	bool IsLastLine();
 
@@ -79,7 +83,6 @@ protected:
 	void PrintEdittingMultiByteStr(wxString &str);
 	void DrawTextLine(wxCoord startRow);
 	void DrawText(wxString& text, wxCoord col, wxCoord row);
-	void DrawText(wxFont& font, wxString& text, wxCoord col, wxCoord row);
 };
 
 
