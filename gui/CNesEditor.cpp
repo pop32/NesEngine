@@ -93,6 +93,7 @@ template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 {
 	m_font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
 	m_fontEditting = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, true);
+
 	viewBkColor = *wxWHITE;
 
 	wxBitmap bmp(50, 50);
@@ -573,8 +574,29 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	PrepareDC(m_dc);
 	m_dc.Clear();
 
-	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcdeあいうえお"))));
-	DrawText(m_font, *m_text[0], 0, 0);
+
+	//TODO ↓↓TEST↓↓
+	CTextColorNesEngineAsm tasm;
+	wxString aaa = wxT("aaaa;bbbb");
+	//tasm.operator=(aaa);
+	tasm.Analyze(aaa);
+
+	std::vector<std::unique_ptr<CTextColorAnalyzedVal>>& abc = tasm.GetAnalyzedVal();
+	int a = abc.size();
+	for (const auto& v : abc) {
+		wxString &abc = v.get()->m_text;
+		wxString::const_iterator test = abc.begin();
+		for(; test != abc.end(); test++) {
+			wchar_t uni_ch = *test;
+			int a = 0;
+		}
+
+		DrawText(m_font, v.get()->m_text, 0, 0);
+	}
+
+	//m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcdeあいうえお"))));
+	//DrawText(m_font, *m_text[0], 0, 0);
+	//TODO ↑↑EST↑↑
 
 }
 

@@ -18,24 +18,21 @@ CTextColorNesEngineAsm::~CTextColorNesEngineAsm() {
 }
 
 
-void CTextColorNesEngineAsm::Analyze(wxString& str)
+void CTextColorNesEngineAsm::AnalyzeSub(const wxString& str, wxString::const_iterator& ite)
 {
-	if (str.length() == 0) {
-		return;
-	}
 
-	wxString::iterator ite = str.begin();
 	wxString tmp;
-	std::unique_ptr<CTextColorAnalyzedVal> analyzed = std::unique_ptr<CTextColorAnalyzedVal>(new CTextColorAnalyzedVal());
-	for(size_t i=0; i < str.length(); i++) {
+	for(ite = str.begin(); ite != str.end();) {
 		//wxUniChar uni_ch = *ite;
 		wchar_t uni_ch = *ite;
 		switch (uni_ch) {
-		case ';':
-
+		case L';':
+			AddSyntaxCommentToEol(str, ite);
+			//CTextColorBase::AddSyntaxCommentToEol(str, ite);
 			break;
+		default:
+			ite++;
 		}
-
 //		// コメント行
 //		if (uni_ch. == ';')) {
 //			analyzed.get()->m_text = str.substr(i);

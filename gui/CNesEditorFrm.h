@@ -17,6 +17,7 @@
 #include <wx/dcbuffer.h>
 #include <wx/chartype.h>
 #include <wx/caret.h>
+#include "CTextColorNesEngineAsm.h"
 
 using namespace std;
 
@@ -32,6 +33,8 @@ protected:
 	wxMemoryDC m_dc;
 	wxFont m_font;
 	wxFont m_fontEditting;
+	wxFont m_fontComment;
+
 	wxColor viewBkColor;
 
 	int m_heightChar, m_widthChar;

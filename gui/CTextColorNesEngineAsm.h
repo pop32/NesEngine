@@ -21,9 +21,14 @@ public:
 	CTextColorNesEngineAsm();
 	virtual ~CTextColorNesEngineAsm();
 
+//	CTextColorNesEngineAsm& operator=(const wxString& str)
+//	{
+//		return CTextColorBase::
+//	};
+
 protected:
 
-	void Analyze(wxString& str);
+	void AnalyzeSub(const wxString& str, wxString::const_iterator& ite);
 
 };
 

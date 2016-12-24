@@ -20,13 +20,24 @@ class CTextColorBase {
 public:
 	CTextColorBase();
 	virtual ~CTextColorBase();
-	CTextColorBase& operator=(wxString& str);
+//	CTextColorBase& operator=(const wxString& str){
+//		return NULL;
+//	};
+//	//CTextColorBase& operator=(wxString str);
+
+	void Analyze(const wxString& str);
+
+	std::vector<std::unique_ptr<CTextColorAnalyzedVal>>& GetAnalyzedVal()
+	{
+		return m_analysedVal;
+	};
 
 protected:
 	std::vector<std::unique_ptr<CTextColorAnalyzedVal>> m_analysedVal;
-	virtual void Analyze(wxString& str) = 0;
+	virtual void AnalyzeSub(const wxString& str, wxString::const_iterator& ite) = 0;
 
-	wxString SkipSpace(wxString& str);
+	void SkipSpace(wxString& str, wxString::const_iterator& ite);
+	void AddSyntaxCommentToEol(const wxString& str, wxString::const_iterator& ite);
 };
 
 } /* namespace NesEngine */
