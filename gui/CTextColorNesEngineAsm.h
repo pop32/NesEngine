@@ -8,18 +8,22 @@
 #ifndef GUI_CTEXTCOLORNESENGINEASM_H_
 #define GUI_CTEXTCOLORNESENGINEASM_H_
 
+#include <string>
+#include <vector>
+#include <memory>
 #include <wx/string.h>
+#include "CTextColorBase.h"
 
 namespace NesEngine {
 
-class CTextColorNesEngineAsm {
+class CTextColorNesEngineAsm : public CTextColorBase {
 public:
 	CTextColorNesEngineAsm();
 	virtual ~CTextColorNesEngineAsm();
 
-	CTextColorNesEngineAsm& operator=(wxString& str);
-private:
-	wxString m_text;
+protected:
+
+	void Analyze(wxString& str);
 
 };
 
