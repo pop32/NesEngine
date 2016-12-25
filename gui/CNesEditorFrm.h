@@ -84,6 +84,8 @@ protected:
 	void PrintEdittingMultiByteStr(wxString &str);
 	void DrawTextLine(wxCoord startRow);
 	void DrawText(wxString& text, wxCoord col, wxCoord row);
+	void DrawTextTest(wxString& text, wxCoord col, wxCoord row);
+
 };
 
 

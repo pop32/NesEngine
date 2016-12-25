@@ -24,47 +24,37 @@ void CTextColorBase::Analyze(const wxString& str)
 	if (str.length() == 0) {
 		return;
 	}
-//	wxString::const_iterator ite = str.begin();
-//	wxString tmp;
-//	for(ite = str.begin(); ite != str.end();) {
-//		wchar_t uni_ch = *ite;
-//		switch (uni_ch) {
-//		case L' ':
-//		case L'\t':
-//			AddSpace(str, ite);
-//			break;
-//
-////		case L';':
-////			AddSyntaxCommentToEol(str, ite);
-////			break;
-//
-//		default:
-//			AddUndef(str, ite);
-//		}
-//	}
 
-	std::unique_ptr<CTextColorAnalyzedVal> analyzed =
-			std::unique_ptr<CTextColorAnalyzedVal>(new CTextColorAnalyzedVal());
-	CTextColorAnalyzedVal& aVal = *analyzed.get();
-	aVal.m_syntax = CTextColorAnalyzedVal::UNDEF;
-
+	CTextColorAnalyzedVal* aVal = new CTextColorAnalyzedVal();
+	aVal->m_syntax = CTextColorAnalyzedVal::UNDEF;
 	wxString::const_iterator ite = str.begin();
-	wxString prevSeparator = wxT("");
 	for(ite = str.begin(); ite != str.end(); ite++) {
-		for (const auto& v : m_separator) {
-			if (v.get()->compare(*ite)
-					&& ! v.get()->compare(prevSeparator)) {
-				prevSeparator = *v.get();
-				m_analysedVal.push_back(std::move(analyzed));
-				analyzed =
-						std::unique_ptr<CTextColorAnalyzedVal>(new CTextColorAnalyzedVal());
-				aVal = *analyzed.get();
-				aVal.m_syntax = CTextColorAnalyzedVal::UNDEF;
+		bool bHit = false;
+		for (const auto& sep : m_separator) {
+			if (sep.get()->compare(*ite) == 0) {
+				// 前回保存
+				if (aVal->m_text.length() > 0) {
+					m_analysedVal.push_back(std::unique_ptr<CTextColorAnalyzedVal>(aVal));
+				}
+				// セパレータ保存
+				aVal = new CTextColorAnalyzedVal();
+				aVal->m_syntax = CTextColorAnalyzedVal::UNDEF;
+				aVal->m_text += *ite;
+				m_analysedVal.push_back(std::unique_ptr<CTextColorAnalyzedVal>(aVal));
+
+				// 次の単語
+				aVal = new CTextColorAnalyzedVal();
+				aVal->m_syntax = CTextColorAnalyzedVal::UNDEF;
+				bHit = true;
 			}
-			aVal.m_text += *ite;
+		}
+		if (!bHit) {
+			aVal->m_text += *ite;
 		}
 	}
-	m_analysedVal.push_back(std::move(analyzed));
+	if (aVal->m_text.length() > 0) {
+		m_analysedVal.push_back(std::unique_ptr<CTextColorAnalyzedVal>(aVal));
+	}
 
 	AnalyzeSub();
 

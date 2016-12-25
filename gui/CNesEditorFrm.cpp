@@ -509,7 +509,15 @@ template <class T> size_t NesEditorViewBase<T>::GetStringPixelWidth(wxString& st
  */
 template <class T> size_t NesEditorViewBase<T>::GetStringBLen(wxString& str)
 {
-	return 0;
+	size_t ret = 0;
+	for (wxUniChar c : str) {
+		if (c.IsAscii()) {
+			ret++;
+		} else {
+			ret+=2;
+		}
+	}
+	return ret;
 }
 
 
@@ -575,6 +583,21 @@ template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord co
 	this->Refresh();
 }
 
+template <class T> void NesEditorViewBase<T>::DrawTextTest(wxString& str, wxCoord col, wxCoord row)
+{
+	this->PrepareDC(m_dc);
+	m_dc.SetPen(*wxWHITE);
+	m_dc.SetBrush(*wxWHITE);
+	wxSize s = this->GetSize();
+	m_dc.DrawRectangle(0, m_yMargin + (row * m_heightChar)
+			, s.GetWidth(), m_heightChar);
+	m_dc.SetFont(m_font);
+	m_dc.SetTextBackground(*wxWHITE);
+	m_dc.SetTextForeground(*wxBLACK);
+	m_dc.DrawText(str, m_xMargin + (col * m_widthChar), m_yMargin + (row * m_heightChar));
+	this->Refresh();
+}
+
 // ----------------------------------------------------------------------------
 // テキストエディタ
 // ----------------------------------------------------------------------------
@@ -630,10 +653,24 @@ NesEditorView::NesEditorView(wxFrame *parent)
 //	DrawText(*m_text[0], 0, 0);
 
 
-		CTextColorNesEngineAsm tasm;
-		wxString aaa = wxT("aaa bbb ccccc;ddddd");
-		tasm.Analyze(aaa);
+		CTextColorNesEngineAsm testAnalyzer;
+		wxString testStr = wxT("aaa bbb  ccccc;ddddd");
+		testAnalyzer.Analyze(testStr);
 
+		std::vector<std::unique_ptr<CTextColorAnalyzedVal>>& analyzedVal =
+				testAnalyzer.GetAnalyzedVal();
+		int a = analyzedVal.size();
+		int x = 0;
+		for (const auto& v : analyzedVal) {
+			wxString &abc = v.get()->m_text;
+			wxString::const_iterator test = abc.begin();
+			for(; test != abc.end(); test++) {
+				wchar_t uni_ch = *test;
+				int a = 0;
+			}
+			DrawTextTest(v.get()->m_text, x, 0);
+			x += GetStringBLen(v.get()->m_text);
+		}
 
 	//TODO ↑↑EST↑↑
 

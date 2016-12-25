@@ -101,7 +101,7 @@ CTextColorNesEngineAsm::~CTextColorNesEngineAsm() {
 
 void CTextColorNesEngineAsm::AnalyzeSub()
 {
-	SearchComment();
+	//SearchComment();
 
 }
 
