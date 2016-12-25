@@ -563,7 +563,7 @@ template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord co
 			colorFore = m_ColorComment;
 			break;
 		case CTextColorAnalyzedVal::RESERVED:
-			colorFore = *wxRED;
+			colorFore = m_ColorReserved;
 			break;
 
 		case CTextColorAnalyzedVal::STRRING:
@@ -649,28 +649,28 @@ NesEditorView::NesEditorView(wxFrame *parent)
 //		DrawText(m_font, v.get()->m_text, 0, 0);
 //	}
 
-//	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcdeあいうえお;aaaa\taaa"))));
-//	DrawText(*m_text[0], 0, 0);
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcde adc あいうえお ;aaaaaaa"))));
+	DrawText(*m_text[0], 0, 0);
 
 
-		CTextColorNesEngineAsm testAnalyzer;
-		wxString testStr = wxT("aaa bbb  ccccc;ddddd");
-		testAnalyzer.Analyze(testStr);
-
-		std::vector<std::unique_ptr<CTextColorAnalyzedVal>>& analyzedVal =
-				testAnalyzer.GetAnalyzedVal();
-		int a = analyzedVal.size();
-		int x = 0;
-		for (const auto& v : analyzedVal) {
-			wxString &abc = v.get()->m_text;
-			wxString::const_iterator test = abc.begin();
-			for(; test != abc.end(); test++) {
-				wchar_t uni_ch = *test;
-				int a = 0;
-			}
-			DrawTextTest(v.get()->m_text, x, 0);
-			x += GetStringBLen(v.get()->m_text);
-		}
+//		CTextColorNesEngineAsm testAnalyzer;
+//		wxString testStr = wxT("aaa bbb  ccccc;ddddd");
+//		testAnalyzer.Analyze(testStr);
+//
+//		std::vector<std::unique_ptr<CTextColorAnalyzedVal>>& analyzedVal =
+//				testAnalyzer.GetAnalyzedVal();
+//		int a = analyzedVal.size();
+//		int x = 0;
+//		for (const auto& v : analyzedVal) {
+//			wxString &abc = v.get()->m_text;
+//			wxString::const_iterator test = abc.begin();
+//			for(; test != abc.end(); test++) {
+//				wchar_t uni_ch = *test;
+//				int a = 0;
+//			}
+//			DrawTextTest(v.get()->m_text, x, 0);
+//			x += GetStringBLen(v.get()->m_text);
+//		}
 
 	//TODO ↑↑EST↑↑
 

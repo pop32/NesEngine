@@ -28,14 +28,19 @@ void CTextColorBase::Analyze(const wxString& str)
 	CTextColorAnalyzedVal* aVal = new CTextColorAnalyzedVal();
 	aVal->m_syntax = CTextColorAnalyzedVal::UNDEF;
 	wxString::const_iterator ite = str.begin();
-	for(ite = str.begin(); ite != str.end(); ite++) {
+	for(; ite != str.end(); ite++) {
 		bool bHit = false;
 		for (const auto& sep : m_separator) {
 			if (sep.get()->compare(*ite) == 0) {
+
 				// 前回保存
 				if (aVal->m_text.length() > 0) {
 					m_analysedVal.push_back(std::unique_ptr<CTextColorAnalyzedVal>(aVal));
+				} else {
+					// TODO ここの実装なんとかならないか
+					delete aVal;
 				}
+
 				// セパレータ保存
 				aVal = new CTextColorAnalyzedVal();
 				aVal->m_syntax = CTextColorAnalyzedVal::UNDEF;
@@ -52,8 +57,11 @@ void CTextColorBase::Analyze(const wxString& str)
 			aVal->m_text += *ite;
 		}
 	}
+
 	if (aVal->m_text.length() > 0) {
 		m_analysedVal.push_back(std::unique_ptr<CTextColorAnalyzedVal>(aVal));
+	} else {
+		delete aVal;
 	}
 
 	AnalyzeSub();
@@ -61,60 +69,17 @@ void CTextColorBase::Analyze(const wxString& str)
 }
 
 
-void CTextColorBase::AddSpace(const wxString& str, wxString::const_iterator& ite)
+void CTextColorBase::SearchSpace()
 {
+	for (const auto& v : m_analysedVal) {
 
-	std::unique_ptr<CTextColorAnalyzedVal> analyzed =
-			std::unique_ptr<CTextColorAnalyzedVal>(new CTextColorAnalyzedVal());
-	CTextColorAnalyzedVal& aVal = *analyzed.get();
-	aVal.m_syntax = CTextColorAnalyzedVal::SPACE;
-	for(; ite != str.end(); ite++) {
-		wchar_t uni_ch = *ite;
-		switch (uni_ch) {
-		case L' ':
-		case L'\t':
-			aVal.m_text += *ite;
-			break;
-		default:
-			goto END_SPACE;
+		if (v.get()->m_text.compare(L' ') == 0
+				|| v.get()->m_text.compare(L' ') == 0) {
+			v.get()->m_syntax = CTextColorAnalyzedVal::SPACE;
 		}
-	}
-	END_SPACE:
-	m_analysedVal.push_back(std::move(analyzed));
 
+	}
 }
 
-void CTextColorBase::AddSyntaxCommentToEol(const wxString& str, wxString::const_iterator& ite)
-{
-	std::unique_ptr<CTextColorAnalyzedVal> analyzed =
-			std::unique_ptr<CTextColorAnalyzedVal>(new CTextColorAnalyzedVal());
-	CTextColorAnalyzedVal& aVal = *analyzed.get();
-	aVal.m_syntax = CTextColorAnalyzedVal::COMMENT;
-	for(; ite != str.end(); ite++) {
-		aVal.m_text += *ite;
-	}
-	m_analysedVal.push_back(std::move(analyzed));
-}
-
-void CTextColorBase::AddUndef(const wxString& str, wxString::const_iterator& ite)
-{
-	std::unique_ptr<CTextColorAnalyzedVal> analyzed =
-			std::unique_ptr<CTextColorAnalyzedVal>(new CTextColorAnalyzedVal());
-	CTextColorAnalyzedVal& aVal = *analyzed.get();
-	aVal.m_syntax = CTextColorAnalyzedVal::UNDEF;
-	for(; ite != str.end(); ite++) {
-		wchar_t uni_ch = *ite;
-		switch (uni_ch) {
-		case L' ':
-		case L'\t':
-			goto END_ADD;
-
-		default:
-			aVal.m_text += *ite;
-		}
-	}
-	END_ADD:
-	m_analysedVal.push_back(std::move(analyzed));
-}
 
 } /* namespace NesEngine */

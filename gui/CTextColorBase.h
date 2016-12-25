@@ -39,9 +39,8 @@ protected:
 
 	virtual void AnalyzeSub() = 0;
 
-	void AddSpace(const wxString& str, wxString::const_iterator& ite);
-	void AddSyntaxCommentToEol(const wxString& str, wxString::const_iterator& ite);
-	void AddUndef(const wxString& str, wxString::const_iterator& ite);
+	void SearchSpace();
+
 };
 
 } /* namespace NesEngine */

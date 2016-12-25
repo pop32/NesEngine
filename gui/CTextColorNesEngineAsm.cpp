@@ -101,16 +101,24 @@ CTextColorNesEngineAsm::~CTextColorNesEngineAsm() {
 
 void CTextColorNesEngineAsm::AnalyzeSub()
 {
-	//SearchComment();
-
+	SearchSpace();
+	SearchComment();
+	SearchReserved();
 }
 
 void CTextColorNesEngineAsm::SearchComment()
 {
+	bool bCommentStart = false;
 	for (const auto& v : m_analysedVal) {
-		CTextColorAnalyzedVal& tmp = *v.get();
-		if (tmp.m_syntax == CTextColorAnalyzedVal::UNDEF) {
-
+		if (!bCommentStart) {
+			for (wchar_t ch : v.get()->m_text) {
+				if (ch == L';') {
+					bCommentStart = true;
+					v.get()->m_syntax = CTextColorAnalyzedVal::COMMENT;
+				}
+			}
+		} else {
+			v.get()->m_syntax = CTextColorAnalyzedVal::COMMENT;
 		}
 	}
 }
@@ -118,6 +126,16 @@ void CTextColorNesEngineAsm::SearchComment()
 
 void CTextColorNesEngineAsm::SearchReserved()
 {
+	for (const auto& v : m_analysedVal) {
+		if (v.get()->m_syntax != CTextColorAnalyzedVal::UNDEF) {
+			continue;
+		}
+		for (const auto& re : m_reserve) {
+			if (re.get()->compare(v.get()->m_text) == 0) {
+				v.get()->m_syntax = CTextColorAnalyzedVal::RESERVED;
+			}
+		}
+	}
 
 }
 
