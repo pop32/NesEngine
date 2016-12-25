@@ -11,7 +11,7 @@ namespace NesEngine {
 
 CTextColorAnalyzedVal::CTextColorAnalyzedVal() {
 	// TODO 自動生成されたコンストラクター・スタブ
-	m_syntax = CTextColorAnalyzedVal::SyntaxType::UNDEDF;
+	m_syntax = CTextColorAnalyzedVal::SyntaxType::UNDEF;
 }
 
 CTextColorAnalyzedVal::~CTextColorAnalyzedVal() {

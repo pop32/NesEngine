@@ -45,7 +45,8 @@ protected:
 	int m_xMargin, m_yMargin;
 	std::unique_ptr<CTextColorBase> m_syntaxAnalyzer;
 	vector<std::unique_ptr<wxString>> m_text;
-
+	wxColor m_ColorComment;
+	wxColor m_ColorReserved;
 
 	// event
 	WXLRESULT MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam);

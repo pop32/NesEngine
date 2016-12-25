@@ -107,6 +107,9 @@ template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 	m_xChars = m_yChars = 0;
 	m_xMargin = m_yMargin = 3;
 
+	m_ColorComment = wxColor(0, 128, 0);
+	m_ColorReserved = wxColor(0xa7, 0x1d, 0x5d);
+
 	wxCaret *caret = new wxCaret(this, m_widthChar, m_heightChar);
 	caret->SetSize(m_widthChar, m_heightChar);
 	this->SetCaret(caret);
@@ -549,7 +552,7 @@ template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord co
 	for (const auto& v : lst) {
 		switch (v.get()->m_syntax) {
 		case CTextColorAnalyzedVal::COMMENT:
-			colorFore = *wxGREEN;
+			colorFore = m_ColorComment;
 			break;
 		case CTextColorAnalyzedVal::RESERVED:
 			colorFore = *wxRED;
@@ -559,7 +562,7 @@ template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord co
 			colorFore = *wxYELLOW;
 			break;
 
-		case CTextColorAnalyzedVal::UNDEDF:
+		case CTextColorAnalyzedVal::UNDEF:
 		default:
 			colorFore = *wxBLACK;
 			break;
@@ -623,8 +626,15 @@ NesEditorView::NesEditorView(wxFrame *parent)
 //		DrawText(m_font, v.get()->m_text, 0, 0);
 //	}
 
-	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcdeあいうえお;aaaa\taaa"))));
-	DrawText(*m_text[0], 0, 0);
+//	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcdeあいうえお;aaaa\taaa"))));
+//	DrawText(*m_text[0], 0, 0);
+
+
+		CTextColorNesEngineAsm tasm;
+		wxString aaa = wxT("aaa bbb ccccc;ddddd");
+		tasm.Analyze(aaa);
+
+
 	//TODO ↑↑EST↑↑
 
 }

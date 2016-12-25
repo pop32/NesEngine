@@ -34,10 +34,14 @@ public:
 
 protected:
 	std::vector<std::unique_ptr<CTextColorAnalyzedVal>> m_analysedVal;
-	virtual void AnalyzeSub(const wxString& str, wxString::const_iterator& ite) = 0;
 
-	void AddSpace(wxString& str, wxString::const_iterator& ite);
+	std::vector<std::unique_ptr<wxString>> m_separator;
+
+	virtual void AnalyzeSub() = 0;
+
+	void AddSpace(const wxString& str, wxString::const_iterator& ite);
 	void AddSyntaxCommentToEol(const wxString& str, wxString::const_iterator& ite);
+	void AddUndef(const wxString& str, wxString::const_iterator& ite);
 };
 
 } /* namespace NesEngine */

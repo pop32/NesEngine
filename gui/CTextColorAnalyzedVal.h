@@ -22,7 +22,8 @@ public:
 		COMMENT,
 		STRRING,
 		RESERVED,
-		UNDEDF,
+		SPACE,
+		UNDEF,
 	};
 
 	wxString m_text;
