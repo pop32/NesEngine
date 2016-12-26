@@ -38,11 +38,13 @@ protected:
 
 	wxColor viewBkColor;
 
-	int m_heightChar, m_widthChar;
+	size_t m_heightChar, m_widthChar;
 	size_t m_xCharPos;
 	size_t m_xCaret, m_yCaret;
 	size_t m_xChars, m_yChars;
-	int m_xMargin, m_yMargin;
+	size_t m_xMargin, m_yMargin;
+	size_t m_xScrollPos, m_yScrollPos;
+
 	std::unique_ptr<CTextColorBase> m_syntaxAnalyzer;
 	vector<std::unique_ptr<wxString>> m_text;
 	wxColor m_ColorComment;
@@ -53,10 +55,14 @@ protected:
 	void OnPaint( wxPaintEvent &event );
 	void OnChar(wxKeyEvent &event);
 	void OnKeyDown(wxKeyEvent &event);
+	void OnScrollWin(wxScrollWinEvent& event);
+	void OnScroll(wxScrollEvent& event);
 	//void OnEraseBackground( wxEraseEvent &event );
 
 	// キーボード操作
 	void DoKeyEnter();
+	void DoKeyDelete();
+	void DoKeyBack();
 
 	// キャレット操作
 	void DoMoveCaret();
@@ -75,7 +81,6 @@ protected:
 	size_t GetStringBLen(wxString& str);
 	wxPoint GetCaretPixelPoint();
 	bool IsLastLine();
-
 
 	// テキスト操作
 	void InsertStr(wxChar ch);

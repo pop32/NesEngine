@@ -67,6 +67,7 @@ CNesEditorFrm::CNesEditorFrm(wxFrame *parent, const wxString& title, const wxPoi
 //	testdata = 0;
 }
 
+
 // -----------------
 // event handlers
 // -----------------
@@ -89,7 +90,8 @@ void CNesEditorFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
 // ----------------------------------------------------------------------------
 
 
-template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
+template <class T>
+NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 {
 	m_font = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false);
 	m_fontEditting = wxFont(10, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, true);
@@ -105,7 +107,8 @@ template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 	m_xCharPos = 0;
 	m_xCaret = m_yCaret = 0;
 	m_xChars = m_yChars = 0;
-	m_xMargin = m_yMargin = 3;
+	m_xMargin = m_yMargin = 0;
+	m_xScrollPos = m_yScrollPos = 0;
 
 	m_ColorComment = wxColor(0, 128, 0);
 	m_ColorReserved = wxColor(0xa7, 0x1d, 0x5d);
@@ -118,11 +121,13 @@ template <class T> NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 
 }
 
+
 // ------------------------------
 // イベントハンドラー
 // ------------------------------
 
-template <class T> WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam)
+template <class T>
+WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam)
 {
 	WXLRESULT rc = 0;
 	bool processed = false;
@@ -137,6 +142,7 @@ template <class T> WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message,
 		HIMC hImc = ImmGetContext(this->GetHWND());
 
 		// TODO 複数単語変換処理
+		// TODO 候補文字列の編集処理・描画処理
 
 		// 確定
 		if (lParam & GCS_RESULTSTR) {
@@ -186,15 +192,16 @@ template <class T> WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message,
 
 }
 
+
 /**
  * 描画イベント
  */
-template <class T> void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
+template <class T>
+void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
 {
 	wxPaintDC dc(this);
 	this->PrepareDC(dc);
 	wxRegionIterator upd(this->GetUpdateRegion());
-
 	while (upd) {
 		wxRect rect(upd.GetRect());
 		dc.Blit(rect.GetLeftTop(), rect.GetSize(), &m_dc, rect.GetLeftTop());
@@ -202,11 +209,11 @@ template <class T> void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
 	}
 }
 
-
 /**
  * キーボード入力
  */
-template <class T> void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
+template <class T>
+void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
 {
 
 	switch ( event.GetKeyCode() )
@@ -225,6 +232,7 @@ template <class T> void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
 
 		case WXK_DOWN:
 			NextLine();
+			event.Skip();
 			break;
 
 		case WXK_HOME:
@@ -236,8 +244,15 @@ template <class T> void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
 			break;
 
 		case WXK_RETURN:
-			// TODO 文字列操作
 			DoKeyEnter();
+			break;
+
+		case WXK_DELETE:
+			DoKeyDelete();
+			break;
+
+		case WXK_BACK:
+			DoKeyBack();
 			break;
 
 		default:
@@ -256,7 +271,8 @@ template <class T> void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
  * キーボード押下
  * ※いまのところ使っていない
  */
-template <class T> void NesEditorViewBase<T>::OnKeyDown( wxKeyEvent &event )
+template <class T>
+void NesEditorViewBase<T>::OnKeyDown( wxKeyEvent &event )
 {
 //	switch ( event.GetKeyCode() )
 //	{
@@ -271,13 +287,68 @@ template <class T> void NesEditorViewBase<T>::OnKeyDown( wxKeyEvent &event )
 // ------------------------------
 // キーボード操作関連
 // ------------------------------
-template <class T> void NesEditorViewBase<T>::DoKeyEnter()
+template <class T>
+void NesEditorViewBase<T>::DoKeyEnter()
 {
 	AddNewLine();
 	NextLine();
 
 }
 
+template <class T>
+void NesEditorViewBase<T>::DoKeyDelete()
+{
+	if (IsLastLine()) {
+		return;
+	}
+	wxString& str = *(m_text[m_yCaret].get());
+	if (str.length() < m_xCharPos) {
+		return;
+	}
+	str.Remove(m_xCharPos, 1);
+	DrawText(str, 0, m_yCaret);
+}
+
+template <class T>
+void NesEditorViewBase<T>::DoKeyBack()
+{
+	if (m_xCharPos == 0) {
+		return;
+	}
+	wxString& str = *(m_text[m_yCaret].get());
+	if (str.length() < m_xCharPos) {
+		return;
+	}
+	wxString::const_iterator ite = str.begin() + (m_xCharPos - 1);
+	wxUniChar c = *ite;
+	m_xCharPos--;
+	if (c.IsAscii()) {
+		m_xCaret--;
+	}else {
+		m_xCaret-=2;
+	}
+	str.Remove(m_xCharPos, 1);
+	DrawText(str, 0, m_yCaret);
+
+}
+
+template <class T>
+void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
+{
+	if (event.GetOrientation() == wxVERTICAL) {
+		if (event.GetEventType() == wxEVT_SCROLLWIN_LINEDOWN) {
+			m_yScrollPos++;
+		} else if (event.GetEventType() == wxEVT_SCROLLWIN_LINEUP) {
+			m_yScrollPos--;
+		}
+	}
+}
+
+template <class T>
+void NesEditorViewBase<T>::OnScroll(wxScrollEvent& event)
+{
+	event.Skip();
+}
 
 // ------------------------------
 // キャレット操作関連
@@ -286,7 +357,8 @@ template <class T> void NesEditorViewBase<T>::DoKeyEnter()
 /**
  * キャレット描画
  */
-template <class T> void NesEditorViewBase<T>::DoMoveCaret()
+template <class T>
+void NesEditorViewBase<T>::DoMoveCaret()
 {
 	this->GetCaret()->Move(m_xMargin + m_xCaret * m_widthChar,
 					 m_yMargin + m_yCaret * m_heightChar);
@@ -297,7 +369,8 @@ template <class T> void NesEditorViewBase<T>::DoMoveCaret()
 /**
  * キャレットを最初に移動
  */
-template <class T> void NesEditorViewBase<T>::Home()
+template<class T>
+void NesEditorViewBase<T>::Home()
 {
 	m_xCharPos = 0;
 	m_xCaret = 0;
@@ -306,7 +379,8 @@ template <class T> void NesEditorViewBase<T>::Home()
 /**
  * キャレットを最後に移動
  */
-template <class T> void NesEditorViewBase<T>::End()
+template <class T>
+void NesEditorViewBase<T>::End()
 {
 	if (IsLastLine()) {
 		m_xCharPos = 0;
@@ -317,7 +391,8 @@ template <class T> void NesEditorViewBase<T>::End()
 	}
 }
 
-template <class T> void NesEditorViewBase<T>::FirstLine()
+template <class T>
+void NesEditorViewBase<T>::FirstLine()
 {
 
 }
@@ -330,7 +405,8 @@ template <class T> void NesEditorViewBase<T>::LastLine()
 /**
  * キャレットを一文字左へ
  */
-template <class T> void NesEditorViewBase<T>::PrevChar()
+template <class T>
+void NesEditorViewBase<T>::PrevChar()
 {
 	if (m_xCharPos == 0) {
 		return;
@@ -347,7 +423,8 @@ template <class T> void NesEditorViewBase<T>::PrevChar()
 /**
  * キャレットを一文字右へ
  */
-template <class T> void NesEditorViewBase<T>::NextChar()
+template <class T>
+void NesEditorViewBase<T>::NextChar()
 {
 	if (IsLastLine()) {
 		m_xCharPos = 0;
@@ -366,7 +443,8 @@ template <class T> void NesEditorViewBase<T>::NextChar()
 /**
  * キャレットを前の行へ
  */
-template <class T> void NesEditorViewBase<T>::PrevLine()
+template <class T>
+void NesEditorViewBase<T>::PrevLine()
 {
 	if (m_yCaret == 0) {
 		return;
@@ -383,7 +461,8 @@ template <class T> void NesEditorViewBase<T>::PrevLine()
 /**
  * キャレットを次の行へ
  */
-template <class T> void NesEditorViewBase<T>::NextLine()
+template <class T>
+void NesEditorViewBase<T>::NextLine()
 {
 	if (IsLastLine()) {
 		m_xCharPos = 0;
@@ -405,7 +484,8 @@ template <class T> void NesEditorViewBase<T>::NextLine()
 	}
 }
 
-template <class T> void NesEditorViewBase<T>::AddNewLine()
+template <class T>
+void NesEditorViewBase<T>::AddNewLine()
 {
 	if (IsLastLine()) {
 		m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT(""))));
@@ -413,6 +493,11 @@ template <class T> void NesEditorViewBase<T>::AddNewLine()
 		m_text.insert(m_text.begin() + m_yCaret+1,
 				std::unique_ptr<wxString>(new wxString(wxT(""))));
 	}
+
+//	// スクロール設定
+//	size_t h = m_yMargin + (m_text.size() * m_heightChar);
+
+
 	DrawTextLine(m_yCaret);
 }
 
@@ -543,16 +628,15 @@ template <class T> void NesEditorViewBase<T>::DrawTextLine(wxCoord startRow)
 
 template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row)
 {
-	this->PrepareDC(m_dc);
+	//this->PrepareDC(m_dc); ←スクロールするとずれるので呼ばない
 	m_dc.SetPen(*wxWHITE);
 	m_dc.SetBrush(*wxWHITE);
 	wxSize s = this->GetSize();
 	m_dc.DrawRectangle(0, m_yMargin + (row * m_heightChar)
 			, s.GetWidth(), m_heightChar);
-
 	m_dc.SetFont(m_font);
 	m_dc.SetTextBackground(*wxWHITE);
-	//m_dc.SetTextForeground(*wxGREEN);
+
 	int x = col;
 	wxColor colorFore;
 	m_syntaxAnalyzer.get()->Analyze(str);
@@ -562,12 +646,13 @@ template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord co
 		case CTextColorAnalyzedVal::COMMENT:
 			colorFore = m_ColorComment;
 			break;
+
 		case CTextColorAnalyzedVal::RESERVED:
 			colorFore = m_ColorReserved;
 			break;
 
 		case CTextColorAnalyzedVal::STRRING:
-			colorFore = *wxYELLOW;
+			colorFore = *wxBLACK;
 			break;
 
 		case CTextColorAnalyzedVal::UNDEF:
@@ -575,11 +660,15 @@ template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord co
 			colorFore = *wxBLACK;
 			break;
 		}
+
 		m_dc.SetTextForeground(colorFore);
 		wxString& s = v.get()->m_text;
 		m_dc.DrawText(s, m_xMargin + (x * m_widthChar), m_yMargin + (row * m_heightChar));
 		x += GetStringBLen(s);
 	}
+	m_dc.SetTextForeground(*wxBLUE);
+	m_dc.DrawText(wxT('↵'), m_xMargin + (x * m_widthChar), m_yMargin + (row * m_heightChar));
+
 	this->Refresh();
 }
 
@@ -607,6 +696,8 @@ wxBEGIN_EVENT_TABLE(NesEditorView, wxScrolledWindow)
 	EVT_PAINT(NesEditorView::OnPaint)
 	EVT_CHAR(NesEditorView::OnChar)
 	EVT_KEY_DOWN(NesEditorView::OnKeyDown)
+	EVT_SCROLLWIN(NesEditorView::OnScrollWin)
+//	EVT_SCROLL(NesEditorView::OnScroll)
 	//EVT_ERASE_BACKGROUND(MyCanvas::OnEraseBackground)
 wxEND_EVENT_TABLE()
 
@@ -615,15 +706,16 @@ NesEditorView::NesEditorView(wxFrame *parent)
  : NesEditorViewBase(parent)
 {
 	Create(parent, wxID_ANY, wxDefaultPosition, parent->GetSize());
-//	SetScrollbars( 0
-//			, nBlockSizeY
-//			, 40, 0x1000, 0, 0 );
+	SetScrollbars( 0
+			, m_heightChar
+			, 1, 1000, 0, 0 );
+	DisableKeyboardScrolling();
 
 	SetFocusIgnoringChildren();
 	SetBackgroundColour(*wxCYAN);
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-	wxBitmap bmp = wxBitmap(parent->GetSize());
+	wxBitmap bmp = wxBitmap(this->GetVirtualSize());
 	m_dc.SelectObject(bmp);
 	PrepareDC(m_dc);
 	m_dc.Clear();
@@ -649,8 +741,8 @@ NesEditorView::NesEditorView(wxFrame *parent)
 //		DrawText(m_font, v.get()->m_text, 0, 0);
 //	}
 
-	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcde adc あいうえお ;aaaaaaa"))));
-	DrawText(*m_text[0], 0, 0);
+//	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("abcde adc あいうえお ;aaaaaaa"))));
+//	DrawText(*m_text[0], 0, 0);
 
 
 //		CTextColorNesEngineAsm testAnalyzer;
@@ -672,7 +764,7 @@ NesEditorView::NesEditorView(wxFrame *parent)
 //			x += GetStringBLen(v.get()->m_text);
 //		}
 
-	//TODO ↑↑EST↑↑
+	//TODO ↑↑TEST↑↑
 
 }
 

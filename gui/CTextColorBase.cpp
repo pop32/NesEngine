@@ -74,7 +74,7 @@ void CTextColorBase::SearchSpace()
 	for (const auto& v : m_analysedVal) {
 
 		if (v.get()->m_text.compare(L' ') == 0
-				|| v.get()->m_text.compare(L' ') == 0) {
+				|| v.get()->m_text.compare(L'\t') == 0) {
 			v.get()->m_syntax = CTextColorAnalyzedVal::SPACE;
 		}
 
