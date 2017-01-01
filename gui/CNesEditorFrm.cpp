@@ -32,8 +32,10 @@ CNesEditorFrm::CNesEditorFrm(wxFrame *parent, const wxString& title, const wxPoi
 {
 	if ( !this->Create(parent, wxID_ANY,
 						title,
-						pos, size,
-						(wxDEFAULT_FRAME_STYLE & ~( wxMAXIMIZE_BOX | wxRESIZE_BORDER )) | wxSYSTEM_MENU | wxCAPTION ) ) {
+						pos, size
+						//,(wxDEFAULT_FRAME_STYLE & ~( wxMAXIMIZE_BOX | wxRESIZE_BORDER )) | wxSYSTEM_MENU | wxCAPTION ) )
+						,(wxDEFAULT_FRAME_STYLE & ~( wxMAXIMIZE_BOX )) | wxSYSTEM_MENU | wxCAPTION ) )
+	{
 		return;
 	}
 
@@ -342,6 +344,7 @@ void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
 			m_yScrollPos--;
 		}
 	}
+	this->Refresh();
 }
 
 template <class T>
@@ -494,6 +497,7 @@ void NesEditorViewBase<T>::AddNewLine()
 				std::unique_ptr<wxString>(new wxString(wxT(""))));
 	}
 
+	SetScroll();
 //	// スクロール設定
 //	size_t h = m_yMargin + (m_text.size() * m_heightChar);
 
@@ -505,7 +509,8 @@ void NesEditorViewBase<T>::AddNewLine()
  * キャレットのX位置を更新
  * （２バイト文字考慮）
  */
-template <class T> void NesEditorViewBase<T>::CalcCaretXPosAndWidth()
+template <class T>
+void NesEditorViewBase<T>::CalcCaretXPosAndWidth()
 {
 	m_xCaret = 0;
 	if (IsLastLine()) {
@@ -528,7 +533,8 @@ template <class T> void NesEditorViewBase<T>::CalcCaretXPosAndWidth()
 /**
  * ウィンドウを基点とした、キャレットの物理位置を返す
  */
-template <class T> wxPoint NesEditorViewBase<T>::GetCaretPixelPoint()
+template <class T>
+wxPoint NesEditorViewBase<T>::GetCaretPixelPoint()
 {
 	wxPoint p;
 	p.x = m_xMargin + (m_xCaret * m_widthChar);
@@ -539,7 +545,8 @@ template <class T> wxPoint NesEditorViewBase<T>::GetCaretPixelPoint()
 /**
  * キャレット位置が最終行か判断
  */
-template <class T> bool NesEditorViewBase<T>::IsLastLine()
+template <class T>
+bool NesEditorViewBase<T>::IsLastLine()
 {
 	return (m_text.size() < m_yCaret+1);
 }
@@ -549,7 +556,8 @@ template <class T> bool NesEditorViewBase<T>::IsLastLine()
 // 文字列操作関連
 // ------------------------------
 
-template <class T> void NesEditorViewBase<T>::InsertStr(wxChar ch)
+template <class T>
+void NesEditorViewBase<T>::InsertStr(wxChar ch)
 {
 	wxString str = ch;
 	InsertStr(str);
@@ -558,7 +566,8 @@ template <class T> void NesEditorViewBase<T>::InsertStr(wxChar ch)
 /**
  * キャレット位置に文字列を挿入
  */
-template <class T> void NesEditorViewBase<T>::InsertStr(wxString& str)
+template <class T>
+void NesEditorViewBase<T>::InsertStr(wxString& str)
 {
 	if (IsLastLine()) {
 		AddNewLine();
@@ -574,7 +583,8 @@ template <class T> void NesEditorViewBase<T>::InsertStr(wxString& str)
 /**
  * 文字の横幅計算
  */
-template <class T> size_t NesEditorViewBase<T>::GetStringPixelWidth(wxString& str)
+template <class T>
+size_t NesEditorViewBase<T>::GetStringPixelWidth(wxString& str)
 {
 	size_t ret = 0;
 	wxString::const_iterator s;
@@ -592,7 +602,8 @@ template <class T> size_t NesEditorViewBase<T>::GetStringPixelWidth(wxString& st
 /**
  * 文字長計算（バイト考慮）
  */
-template <class T> size_t NesEditorViewBase<T>::GetStringBLen(wxString& str)
+template <class T>
+size_t NesEditorViewBase<T>::GetStringBLen(wxString& str)
 {
 	size_t ret = 0;
 	for (wxUniChar c : str) {
@@ -611,12 +622,14 @@ template <class T> size_t NesEditorViewBase<T>::GetStringBLen(wxString& str)
 // ※clipse CDT は region使えない 2016/12/23
 // ------------------------------
 
-template <class T> void NesEditorViewBase<T>::PrintEdittingMultiByteStr(wxString &str)
+template <class T>
+void NesEditorViewBase<T>::PrintEdittingMultiByteStr(wxString &str)
 {
 	//DrawText(str, m_xCaret, m_yCaret, false);
 }
 
-template <class T> void NesEditorViewBase<T>::DrawTextLine(wxCoord startRow)
+template <class T>
+void NesEditorViewBase<T>::DrawTextLine(wxCoord startRow)
 {
 	int i = 0;
 	for(auto ite = m_text.begin() + startRow; ite != m_text.end(); ite++) {
@@ -626,7 +639,8 @@ template <class T> void NesEditorViewBase<T>::DrawTextLine(wxCoord startRow)
 	}
 }
 
-template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row)
+template <class T>
+void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row)
 {
 	//this->PrepareDC(m_dc); ←スクロールするとずれるので呼ばない
 	m_dc.SetPen(*wxWHITE);
@@ -672,7 +686,8 @@ template <class T> void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord co
 	this->Refresh();
 }
 
-template <class T> void NesEditorViewBase<T>::DrawTextTest(wxString& str, wxCoord col, wxCoord row)
+template <class T>
+void NesEditorViewBase<T>::DrawTextTest(wxString& str, wxCoord col, wxCoord row)
 {
 	this->PrepareDC(m_dc);
 	m_dc.SetPen(*wxWHITE);
@@ -686,6 +701,25 @@ template <class T> void NesEditorViewBase<T>::DrawTextTest(wxString& str, wxCoor
 	m_dc.DrawText(str, m_xMargin + (col * m_widthChar), m_yMargin + (row * m_heightChar));
 	this->Refresh();
 }
+
+template <class T>
+void NesEditorViewBase<T>::SetScroll()
+{
+	int line = m_text.size();
+	wxRect winRect = this->GetClientRect();
+	int winH = m_heightChar * line;
+	if (winRect.height <= winH) {
+		int unoiY =((int)(winH - winRect.height) / m_heightChar) +
+				((int)winRect.height / m_heightChar) + 1;
+		this->SetScrollbars( 0
+				, m_heightChar
+				, 1, unoiY, 0, FALSE );
+
+	} else {
+		this->SetScrollbars(1, 1, 0, FALSE);
+	}
+}
+
 
 // ----------------------------------------------------------------------------
 // テキストエディタ
@@ -706,10 +740,11 @@ NesEditorView::NesEditorView(wxFrame *parent)
  : NesEditorViewBase(parent)
 {
 	Create(parent, wxID_ANY, wxDefaultPosition, parent->GetSize());
-	SetScrollbars( 0
-			, m_heightChar
-			, 1, 1000, 0, 0 );
 	DisableKeyboardScrolling();
+
+	//SetScrollbar()
+	//SetScrollbars( 0, m_heightChar, 1, 40, 0, 0 );
+
 
 	SetFocusIgnoringChildren();
 	SetBackgroundColour(*wxCYAN);

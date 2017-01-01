@@ -91,6 +91,7 @@ protected:
 	void DrawText(wxString& text, wxCoord col, wxCoord row);
 	void DrawTextTest(wxString& text, wxCoord col, wxCoord row);
 
+	void SetScroll();
 };
 
 
