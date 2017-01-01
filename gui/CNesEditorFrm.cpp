@@ -4,10 +4,13 @@
  *  Created on: 2016/12/21
  *	  Author: kyon
  *
- *	Bug: 20170102_1 TODO sizerを使うとサイズ変更イベントでバグるので一旦これで。※中の描画領域が変わらない
+ *  Bug
+ *   ・TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
+ *
+ *  TODO
+ *   ・複数単語変換処理
+ *
  */
-
-
 
 
 #include "CNesEditorFrm.h"
@@ -62,15 +65,21 @@ CNesEditorFrm::CNesEditorFrm(wxFrame *parent, const wxString& title, const wxPoi
 	// ... and attach this menu bar to the frame
 	SetMenuBar(menuBar);
 
-//	wxBoxSizer *topBox = new wxBoxSizer(wxVERTICAL);
-//	wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
-//
-//	vbox->Add(new NesEditorView(this), 0, wxEXPAND, 0);
-//	topBox->Add(vbox, 1, wxEXPAND, 0);
-//	SetSizer(topBox);
+	wxBoxSizer *topBox = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
 
-	// TODO  20170102_1 sizerを使うとサイズ変更イベントでバグるので一旦これで。※中の描画領域が変わらない
-	new NesEditorView(this);
+	vbox->Add(new NesEditorView(this)
+				, 1				// 縦伸縮可
+				, wxEXPAND
+				, 0);
+
+	topBox->Add(vbox
+				, 1				// 横伸縮可
+				, wxEXPAND
+				, 0);
+
+	SetSizer(topBox);
+
 
 //
 //
@@ -94,12 +103,6 @@ void CNesEditorFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
 	wxMessageBox(wxT("The caret NesEngine .\n(c) 2016 pop32")
 			,wxT("About") , wxOK | wxICON_INFORMATION, this);
 }
-
-// TODO  20170102_1 sizerを使うとサイズ変更イベントでバグるので一旦これで。※中の描画領域が変わらない
-//void CNesEditorFrm::OnSize(wxSizeEvent& event)
-//{
-//	this->FitInside();
-//}
 
 // ----------------------------------------------------------------------------
 // テキストエディタ ベース処理
@@ -125,6 +128,7 @@ NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 	m_xChars = m_yChars = 0;
 	m_xMargin = m_yMargin = 0;
 	m_xScrollPos = m_yScrollPos = 0;
+	m_xMaxScrollPos =  m_yMaxScrollPos = 0;
 
 	m_ColorComment = wxColor(0, 128, 0);
 	m_ColorReserved = wxColor(0xa7, 0x1d, 0x5d);
@@ -217,12 +221,30 @@ void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
 {
 	wxPaintDC dc(this);
 	this->PrepareDC(dc);
-	wxRegionIterator upd(this->GetUpdateRegion());
-	while (upd) {
-		wxRect rect(upd.GetRect());
-		dc.Blit(rect.GetLeftTop(), rect.GetSize(), &m_dc, rect.GetLeftTop());
-		upd++;
-	}
+
+//	wxPoint p = dc.GetDeviceOrigin();
+////	m_dc.SetDeviceOrigin(p.x, p.y);
+//	//m_dc.SetLogicalOrigin(0, 0);
+//
+//	//this->PrepareDC(m_dc);
+//	wxRegionIterator upd(this->GetUpdateRegion());
+//	while (upd) {
+//		wxRect rect(upd.GetRect());
+//		wxPoint lefttop = rect.GetLeftTop();
+//		//wxSize updSize = wxSize()
+//		rect.height += rect.y;
+//		dc.Blit(rect.GetLeftTop(), rect.GetSize(), &m_dc, rect.GetLeftTop());
+//		upd++;
+//	}
+
+	// スクロールするとき、↑アップデート領域がおかしい。
+	// TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
+	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &m_dc, wxPoint(0,0));
+//	size_t y = m_yScrollPos * m_heightChar;
+//	dc.Blit(wxPoint(0,y), this->GetSize(), &m_dc, wxPoint(0,y));
+
+	//dc.DrawBitmap(m_bitmap, wxPoint(0,0));
+
 }
 
 /**
@@ -361,13 +383,27 @@ void NesEditorViewBase<T>::DoKeyBack()
 template <class T>
 void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
 {
-	if (event.GetOrientation() == wxVERTICAL) {
-		if (event.GetEventType() == wxEVT_SCROLLWIN_LINEDOWN) {
-			m_yScrollPos++;
-		} else if (event.GetEventType() == wxEVT_SCROLLWIN_LINEUP) {
-			m_yScrollPos--;
-		}
-	}
+	//TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
+//	if (event.GetOrientation() == wxVERTICAL) {
+//		// ※TOPまたはBOTTOMに到着しても、LINEUP,LINEDOWNイベントが発生するので補正追加
+//		wxEventType scrollType(event.GetEventType());
+//		if (scrollType == wxEVT_SCROLLWIN_LINEDOWN) {
+//			int test = event.GetPosition();
+//			if (m_yScrollPos != m_yMaxScrollPos) {
+//				m_yScrollPos++;
+//			}
+//		} else if (scrollType == wxEVT_SCROLLWIN_LINEUP) {
+//			int test = event.GetPosition();
+//
+//			if (m_yScrollPos != 0) {
+//				m_yScrollPos--;
+//			}
+//		}else if (scrollType == wxEVT_SCROLLWIN_TOP) {
+//			m_yScrollPos = 0;
+//		}else if (scrollType == wxEVT_SCROLLWIN_BOTTOM) {
+//			m_yScrollPos = m_yMaxScrollPos;
+//		}
+//	}
 	this->Refresh();
 }
 
@@ -678,13 +714,17 @@ template <class T>
 void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row, bool bRefresh)
 {
 	//this->PrepareDC(m_dc); ←スクロールするとずれるので呼ばない
-	m_dc.SetPen(*wxWHITE);
-	m_dc.SetBrush(*wxWHITE);
+
+//	wxMemoryDC dc(m_bitmap);
+	wxMemoryDC& dc = m_dc;
+
+	dc.SetPen(*wxWHITE);
+	dc.SetBrush(*wxWHITE);
 	wxSize s = this->GetSize();
-	m_dc.DrawRectangle(0, m_yMargin + (row * m_heightChar)
+	dc.DrawRectangle(0, m_yMargin + (row * m_heightChar)
 			, s.GetWidth(), m_heightChar);
-	m_dc.SetFont(m_font);
-	m_dc.SetTextBackground(*wxWHITE);
+	dc.SetFont(m_font);
+	dc.SetTextBackground(*wxWHITE);
 
 	int x = col;
 	wxColor colorFore;
@@ -710,13 +750,13 @@ void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row, boo
 			break;
 		}
 
-		m_dc.SetTextForeground(colorFore);
+		dc.SetTextForeground(colorFore);
 		wxString& s = v.get()->m_text;
-		m_dc.DrawText(s, m_xMargin + (x * m_widthChar), m_yMargin + (row * m_heightChar));
+		dc.DrawText(s, m_xMargin + (x * m_widthChar), m_yMargin + (row * m_heightChar));
 		x += GetStringBLen(s);
 	}
-	m_dc.SetTextForeground(*wxBLUE);
-	m_dc.DrawText(wxT('↵'), m_xMargin + (x * m_widthChar), m_yMargin + (row * m_heightChar));
+	dc.SetTextForeground(*wxBLUE);
+	dc.DrawText(wxT('↵'), m_xMargin + (x * m_widthChar), m_yMargin + (row * m_heightChar));
 
 	if (bRefresh) {
 		this->Refresh();
@@ -753,9 +793,10 @@ void NesEditorViewBase<T>::SetScroll()
 		this->SetScrollbars( 0
 				, m_heightChar
 				, 1, unoY, 0, FALSE );
-
+		m_yMaxScrollPos = unoY;
 	} else {
 		this->SetScrollbars(1, 1, 0, FALSE);
+		m_yMaxScrollPos = 0;
 	}
 	this->Refresh();
 }
@@ -788,7 +829,9 @@ void NesEditorViewBase<T>::SetSurface()
 		wxSize bmpSize(w, h);
 		wxBitmap bmp = wxBitmap(bmpSize);
 		m_dc.SelectObject(bmp);
-		//PrepareDC(m_dc);
+//		m_dc.SetDeviceOrigin(0, 0);
+//		m_dc.SetLogicalOrigin(0, 0);
+		//this->PrepareDC(m_dc);
 		m_dc.Clear();
 		DrawTextAll(true);
 		return;
@@ -801,7 +844,9 @@ void NesEditorViewBase<T>::SetSurface()
 		wxSize bmpSize(w, h);
 		wxBitmap bmp = wxBitmap(bmpSize);
 		m_dc.SelectObject(bmp);
-		//PrepareDC(m_dc);
+//		m_dc.SetDeviceOrigin(0, 0);
+//		m_dc.SetLogicalOrigin(0, 0);
+		//this->PrepareDC(m_dc);
 		m_dc.Clear();
 		DrawTextAll(true);
 		return;
@@ -833,24 +878,57 @@ NesEditorView::NesEditorView(wxFrame *parent)
 {
 	Create(parent, wxID_ANY, wxDefaultPosition, parent->GetSize());
 	DisableKeyboardScrolling();
-	//this->SetSize()
-	//SetScrollbar()
-	//SetScrollbars( 0, m_heightChar, 1, 40, 0, 0 );
-
 
 	SetFocusIgnoringChildren();
 	SetBackgroundColour(*wxCYAN);
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 
 	SetSurface();
-//	wxBitmap bmp = wxBitmap(this->GetVirtualSize());
-//	m_dc.SelectObject(bmp);
-//	PrepareDC(m_dc);
-//	m_dc.Clear();
 
 	m_syntaxAnalyzer = std::unique_ptr<CTextColorBase>(new CTextColorNesEngineAsm());
 
+
 	//TODO ↓↓TEST↓↓
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("1abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("2abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("3abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("4abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("5abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("6abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("7abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("8abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("9abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("10abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("11abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("12abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("13abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("14abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("15abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("16abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("17abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("18abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("19abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("20abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("21abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("22abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("23abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("24abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("25abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("26abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("27abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("28abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("29abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("30abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("31abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("32abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("33abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("34abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("35abcde adc あいうえお ;aaaaaaa"))));
+	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("36abcde adc あいうえお ;aaaaaaa"))));
+	SetScroll();
+	DrawTextAll(true);
+
+
 //	CTextColorNesEngineAsm tasm;
 //	wxString aaa = wxT("aaaa;bbbb");
 //	//tasm.operator=(aaa);
@@ -893,6 +971,8 @@ NesEditorView::NesEditorView(wxFrame *parent)
 //		}
 
 	//TODO ↑↑TEST↑↑
+
+
 
 }
 

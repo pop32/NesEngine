@@ -32,6 +32,8 @@ public:
 
 protected:
 	wxMemoryDC m_dc;
+//	wxBitmap m_bitmap;
+
 	wxFont m_font;
 	wxFont m_fontEditting;
 	wxFont m_fontComment;
@@ -44,6 +46,7 @@ protected:
 	size_t m_xChars, m_yChars;
 	size_t m_xMargin, m_yMargin;
 	size_t m_xScrollPos, m_yScrollPos;
+	size_t m_xMaxScrollPos, m_yMaxScrollPos;
 
 	std::unique_ptr<CTextColorBase> m_syntaxAnalyzer;
 	vector<std::unique_ptr<wxString>> m_text;
