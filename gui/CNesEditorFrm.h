@@ -57,6 +57,7 @@ protected:
 	void OnKeyDown(wxKeyEvent &event);
 	void OnScrollWin(wxScrollWinEvent& event);
 	void OnScroll(wxScrollEvent& event);
+	void OnSize(wxSizeEvent& event);
 	//void OnEraseBackground( wxEraseEvent &event );
 
 	// キーボード操作
@@ -87,11 +88,13 @@ protected:
 	void InsertStr(wxString& str);
 
 	void PrintEdittingMultiByteStr(wxString &str);
-	void DrawTextLine(wxCoord startRow);
-	void DrawText(wxString& text, wxCoord col, wxCoord row);
+	void DrawTextAll(bool bRefresh = true);
+	void DrawTextLine(wxCoord startRow, bool bRefresh = true);
+	void DrawText(wxString& text, wxCoord col, wxCoord row, bool bRefresh = true);
 	void DrawTextTest(wxString& text, wxCoord col, wxCoord row);
 
 	void SetScroll();
+	void SetSurface();
 };
 
 
@@ -114,6 +117,7 @@ public:
 
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
+	void OnSize(wxSizeEvent& event);
 
 private:
 

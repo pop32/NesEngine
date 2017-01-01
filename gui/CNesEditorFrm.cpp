@@ -3,7 +3,12 @@
  *
  *  Created on: 2016/12/21
  *	  Author: kyon
+ *
+ *	Bug: 20170102_1 TODO sizerを使うとサイズ変更イベントでバグるので一旦これで。※中の描画領域が変わらない
  */
+
+
+
 
 #include "CNesEditorFrm.h"
 
@@ -17,6 +22,7 @@ namespace NesEngine {
 wxBEGIN_EVENT_TABLE(CNesEditorFrm, wxFrame)
 	EVT_MENU(CNesEditorFrm_Quit,  CNesEditorFrm::OnQuit)
 	EVT_MENU(CNesEditorFrm_About, CNesEditorFrm::OnAbout)
+//	EVT_SIZE(CNesEditorFrm::OnSize)
 //	EVT_TIMER(CNesEditorFrm_TestTimer, CNesEditorFrm::OnTimer)
 wxEND_EVENT_TABLE()
 
@@ -56,13 +62,16 @@ CNesEditorFrm::CNesEditorFrm(wxFrame *parent, const wxString& title, const wxPoi
 	// ... and attach this menu bar to the frame
 	SetMenuBar(menuBar);
 
-	wxBoxSizer *topBox = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
+//	wxBoxSizer *topBox = new wxBoxSizer(wxVERTICAL);
+//	wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
+//
+//	vbox->Add(new NesEditorView(this), 0, wxEXPAND, 0);
+//	topBox->Add(vbox, 1, wxEXPAND, 0);
+//	SetSizer(topBox);
 
-	vbox->Add(new NesEditorView(this), 0, wxEXPAND, 0);
+	// TODO  20170102_1 sizerを使うとサイズ変更イベントでバグるので一旦これで。※中の描画領域が変わらない
+	new NesEditorView(this);
 
-	topBox->Add(vbox, 1, wxEXPAND, 0);
-	SetSizer(topBox);
 //
 //
 //	m_timer.Start(10);
@@ -86,6 +95,11 @@ void CNesEditorFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
 			,wxT("About") , wxOK | wxICON_INFORMATION, this);
 }
 
+// TODO  20170102_1 sizerを使うとサイズ変更イベントでバグるので一旦これで。※中の描画領域が変わらない
+//void CNesEditorFrm::OnSize(wxSizeEvent& event)
+//{
+//	this->FitInside();
+//}
 
 // ----------------------------------------------------------------------------
 // テキストエディタ ベース処理
@@ -285,6 +299,16 @@ void NesEditorViewBase<T>::OnKeyDown( wxKeyEvent &event )
 	event.Skip();
 }
 
+
+template <class T>
+void NesEditorViewBase<T>::OnSize(wxSizeEvent& event)
+{
+//	this->SetSize(event.GetSize());
+	SetScroll();
+	SetSurface();
+
+	event.Skip(false);
+}
 
 // ------------------------------
 // キーボード操作関連
@@ -498,6 +522,7 @@ void NesEditorViewBase<T>::AddNewLine()
 	}
 
 	SetScroll();
+	SetSurface();
 //	// スクロール設定
 //	size_t h = m_yMargin + (m_text.size() * m_heightChar);
 
@@ -629,18 +654,28 @@ void NesEditorViewBase<T>::PrintEdittingMultiByteStr(wxString &str)
 }
 
 template <class T>
-void NesEditorViewBase<T>::DrawTextLine(wxCoord startRow)
+void NesEditorViewBase<T>::DrawTextAll(bool bRefresh)
+{
+	DrawTextLine(0, bRefresh);
+}
+
+template <class T>
+void NesEditorViewBase<T>::DrawTextLine(wxCoord startRow, bool bRefresh)
 {
 	int i = 0;
 	for(auto ite = m_text.begin() + startRow; ite != m_text.end(); ite++) {
 		wxString* str = (*ite).get();
-		DrawText(*str, 0, startRow + i);
+		DrawText(*str, 0, startRow + i, false);
 		i++;
 	}
+	if (bRefresh) {
+		this->Refresh();
+	}
+
 }
 
 template <class T>
-void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row)
+void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row, bool bRefresh)
 {
 	//this->PrepareDC(m_dc); ←スクロールするとずれるので呼ばない
 	m_dc.SetPen(*wxWHITE);
@@ -683,7 +718,10 @@ void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row)
 	m_dc.SetTextForeground(*wxBLUE);
 	m_dc.DrawText(wxT('↵'), m_xMargin + (x * m_widthChar), m_yMargin + (row * m_heightChar));
 
-	this->Refresh();
+	if (bRefresh) {
+		this->Refresh();
+	}
+
 }
 
 template <class T>
@@ -705,21 +743,73 @@ void NesEditorViewBase<T>::DrawTextTest(wxString& str, wxCoord col, wxCoord row)
 template <class T>
 void NesEditorViewBase<T>::SetScroll()
 {
-	int line = m_text.size();
+	//TODO 横スクロールの設定
+	size_t line = m_text.size();
 	wxRect winRect = this->GetClientRect();
-	int winH = m_heightChar * line;
+	int winH = m_heightChar * (line + 1);
 	if (winRect.height <= winH) {
-		int unoiY =((int)(winH - winRect.height) / m_heightChar) +
-				((int)winRect.height / m_heightChar) + 1;
+		int unoY =((int)(winH - winRect.height) / m_heightChar) +
+				((int)winRect.height / m_heightChar) + 10;
 		this->SetScrollbars( 0
 				, m_heightChar
-				, 1, unoiY, 0, FALSE );
+				, 1, unoY, 0, FALSE );
 
 	} else {
 		this->SetScrollbars(1, 1, 0, FALSE);
 	}
+	this->Refresh();
 }
 
+template <class T>
+void NesEditorViewBase<T>::SetSurface()
+{
+	// ※スクロール設定側で文字幅考慮したウィンドウサイズ設定しているので
+	//   VirtualSizeでとってきている
+
+	wxSize surfaceSize = m_dc.GetSize();
+	wxSize winSize = this->GetVirtualSize();
+	size_t surfaceHeight = surfaceSize.GetHeight();
+	size_t surfaceWidth = surfaceSize.GetWidth();
+
+	size_t winHeight = winSize.GetHeight();
+	size_t addHeight = (m_heightChar * 100);
+	size_t chkHeight = (m_heightChar * 10);
+
+	size_t winWidth = winSize.GetWidth();
+	size_t addWidth = (m_widthChar * 100);
+	size_t chkWidth = (m_widthChar * 10);
+
+	//size_t newHeight = winHeight + (m_heightChar * 100);
+
+	// 縦チェック
+	if (winHeight > surfaceHeight + chkHeight) {
+		size_t h = (((int)(winHeight / m_heightChar)) * m_heightChar) + addHeight;
+		size_t w = (((int)(winWidth / m_widthChar)) * m_widthChar) + addWidth;
+		wxSize bmpSize(w, h);
+		wxBitmap bmp = wxBitmap(bmpSize);
+		m_dc.SelectObject(bmp);
+		//PrepareDC(m_dc);
+		m_dc.Clear();
+		DrawTextAll(true);
+		return;
+	}
+
+	// 横チェック
+	if (winWidth > surfaceWidth + chkWidth) {
+		size_t h = (((int)(winHeight / m_heightChar)) * m_heightChar) + addHeight;
+		size_t w = (((int)(winWidth / m_widthChar)) * m_widthChar) + addWidth;
+		wxSize bmpSize(w, h);
+		wxBitmap bmp = wxBitmap(bmpSize);
+		m_dc.SelectObject(bmp);
+		//PrepareDC(m_dc);
+		m_dc.Clear();
+		DrawTextAll(true);
+		return;
+	}
+
+	// TODO 画面が小さくなったときは、背景のDCを小さくする。
+
+}
 
 // ----------------------------------------------------------------------------
 // テキストエディタ
@@ -731,6 +821,8 @@ wxBEGIN_EVENT_TABLE(NesEditorView, wxScrolledWindow)
 	EVT_CHAR(NesEditorView::OnChar)
 	EVT_KEY_DOWN(NesEditorView::OnKeyDown)
 	EVT_SCROLLWIN(NesEditorView::OnScrollWin)
+	EVT_SIZE(NesEditorView::OnSize)
+
 //	EVT_SCROLL(NesEditorView::OnScroll)
 	//EVT_ERASE_BACKGROUND(MyCanvas::OnEraseBackground)
 wxEND_EVENT_TABLE()
@@ -741,7 +833,7 @@ NesEditorView::NesEditorView(wxFrame *parent)
 {
 	Create(parent, wxID_ANY, wxDefaultPosition, parent->GetSize());
 	DisableKeyboardScrolling();
-
+	//this->SetSize()
 	//SetScrollbar()
 	//SetScrollbars( 0, m_heightChar, 1, 40, 0, 0 );
 
@@ -750,10 +842,11 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	SetBackgroundColour(*wxCYAN);
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 
-	wxBitmap bmp = wxBitmap(this->GetVirtualSize());
-	m_dc.SelectObject(bmp);
-	PrepareDC(m_dc);
-	m_dc.Clear();
+	SetSurface();
+//	wxBitmap bmp = wxBitmap(this->GetVirtualSize());
+//	m_dc.SelectObject(bmp);
+//	PrepareDC(m_dc);
+//	m_dc.Clear();
 
 	m_syntaxAnalyzer = std::unique_ptr<CTextColorBase>(new CTextColorNesEngineAsm());
 
