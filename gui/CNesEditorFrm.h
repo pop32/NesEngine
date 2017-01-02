@@ -41,9 +41,8 @@ protected:
 	wxColor viewBkColor;
 
 	size_t m_heightChar, m_widthChar;
-	size_t m_xCharPos;
+	size_t m_xCharPos, m_yCharPos;
 	size_t m_xCaret, m_yCaret;
-	size_t m_xChars, m_yChars;
 	size_t m_xMargin, m_yMargin;
 	size_t m_xScrollPos, m_yScrollPos;
 	size_t m_xMaxScrollPos, m_yMaxScrollPos;
@@ -64,9 +63,13 @@ protected:
 	//void OnEraseBackground( wxEraseEvent &event );
 
 	// キーボード操作
-	void DoKeyEnter();
-	void DoKeyDelete();
-	void DoKeyBack();
+	void DoKeyEnter(wxKeyEvent &event);
+	void DoKeyDelete(wxKeyEvent &event);
+	void DoKeyBack(wxKeyEvent &event);
+	void DoKeyLeft(wxKeyEvent &event);
+	void DoKeyRight(wxKeyEvent &event);
+	void DoKeyUp(wxKeyEvent &event);
+	void DoKeyDown(wxKeyEvent &event);
 
 	// キャレット操作
 	void DoMoveCaret();
@@ -85,6 +88,12 @@ protected:
 	size_t GetStringBLen(wxString& str);
 	wxPoint GetCaretPixelPoint();
 	bool IsLastLine();
+
+	void CorrectScrollPos();
+	int IsCaretExistsWindowArea();
+	bool IsCaretWindowTop();
+	bool IsCaretWindowBottom();
+	void MoveScrollPos(int dx, int dy);
 
 	// テキスト操作
 	void InsertStr(wxChar ch);

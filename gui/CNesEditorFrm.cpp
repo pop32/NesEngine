@@ -123,9 +123,8 @@ NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 	m_heightChar = dc.GetCharHeight();
 	m_widthChar = dc.GetCharWidth();
 
-	m_xCharPos = 0;
+	m_xCharPos = m_yCharPos = 0;
 	m_xCaret = m_yCaret = 0;
-	m_xChars = m_yChars = 0;
 	m_xMargin = m_yMargin = 0;
 	m_xScrollPos = m_yScrollPos = 0;
 	m_xMaxScrollPos =  m_yMaxScrollPos = 0;
@@ -257,20 +256,19 @@ void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
 	switch ( event.GetKeyCode() )
 	{
 		case WXK_LEFT:
-			PrevChar();
+			DoKeyLeft(event);
 			break;
 
 		case WXK_RIGHT:
-			NextChar();
+			DoKeyRight(event);
 			break;
 
 		case WXK_UP:
-			PrevLine();
+			DoKeyUp(event);
 			break;
 
 		case WXK_DOWN:
-			NextLine();
-			event.Skip();
+			DoKeyDown(event);
 			break;
 
 		case WXK_HOME:
@@ -282,15 +280,15 @@ void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
 			break;
 
 		case WXK_RETURN:
-			DoKeyEnter();
+			DoKeyEnter(event);
 			break;
 
 		case WXK_DELETE:
-			DoKeyDelete();
+			DoKeyDelete(event);
 			break;
 
 		case WXK_BACK:
-			DoKeyBack();
+			DoKeyBack(event);
 			break;
 
 		default:
@@ -336,7 +334,7 @@ void NesEditorViewBase<T>::OnSize(wxSizeEvent& event)
 // キーボード操作関連
 // ------------------------------
 template <class T>
-void NesEditorViewBase<T>::DoKeyEnter()
+void NesEditorViewBase<T>::DoKeyEnter(wxKeyEvent &event)
 {
 	AddNewLine();
 	NextLine();
@@ -344,26 +342,26 @@ void NesEditorViewBase<T>::DoKeyEnter()
 }
 
 template <class T>
-void NesEditorViewBase<T>::DoKeyDelete()
+void NesEditorViewBase<T>::DoKeyDelete(wxKeyEvent &event)
 {
 	if (IsLastLine()) {
 		return;
 	}
-	wxString& str = *(m_text[m_yCaret].get());
+	wxString& str = *(m_text[m_yCharPos].get());
 	if (str.length() < m_xCharPos) {
 		return;
 	}
 	str.Remove(m_xCharPos, 1);
-	DrawText(str, 0, m_yCaret);
+	DrawText(str, 0, m_yCharPos);
 }
 
 template <class T>
-void NesEditorViewBase<T>::DoKeyBack()
+void NesEditorViewBase<T>::DoKeyBack(wxKeyEvent &event)
 {
 	if (m_xCharPos == 0) {
 		return;
 	}
-	wxString& str = *(m_text[m_yCaret].get());
+	wxString& str = *(m_text[m_yCharPos].get());
 	if (str.length() < m_xCharPos) {
 		return;
 	}
@@ -376,17 +374,49 @@ void NesEditorViewBase<T>::DoKeyBack()
 		m_xCaret-=2;
 	}
 	str.Remove(m_xCharPos, 1);
-	DrawText(str, 0, m_yCaret);
+	DrawText(str, 0, m_yCharPos);
 
 }
+
+template <class T>
+void NesEditorViewBase<T>::DoKeyLeft(wxKeyEvent &event)
+{
+	PrevChar();
+	//CorrectScrollPos();
+}
+
+template <class T>
+void NesEditorViewBase<T>::DoKeyRight(wxKeyEvent &event)
+{
+	NextChar();
+	//CorrectScrollPos();
+}
+
+template <class T>
+void NesEditorViewBase<T>::DoKeyUp(wxKeyEvent &event)
+{
+	PrevLine();
+	//CorrectScrollPos();
+}
+
+template <class T>
+void NesEditorViewBase<T>::DoKeyDown(wxKeyEvent &event)
+{
+	NextLine();
+	IsCaretExistsWindowArea();
+	//CorrectScrollPos();
+}
+
 
 template <class T>
 void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
 {
 	//TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
-//	if (event.GetOrientation() == wxVERTICAL) {
-//		// ※TOPまたはBOTTOMに到着しても、LINEUP,LINEDOWNイベントが発生するので補正追加
+	if (event.GetOrientation() == wxVERTICAL) {
+		// ※TOPまたはBOTTOMに到着しても、LINEUP,LINEDOWNイベントが発生するので補正追加
 //		wxEventType scrollType(event.GetEventType());
+		int diff = this->CalcScrollInc(event);
+		m_yScrollPos += diff;
 //		if (scrollType == wxEVT_SCROLLWIN_LINEDOWN) {
 //			int test = event.GetPosition();
 //			if (m_yScrollPos != m_yMaxScrollPos) {
@@ -403,7 +433,9 @@ void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
 //		}else if (scrollType == wxEVT_SCROLLWIN_BOTTOM) {
 //			m_yScrollPos = m_yMaxScrollPos;
 //		}
-//	}
+	}
+//	int x, y;
+//	this->CalcUnscrolledPosition(0, 0, &x, &y);
 	this->Refresh();
 }
 
@@ -449,7 +481,7 @@ void NesEditorViewBase<T>::End()
 		m_xCharPos = 0;
 		m_xCaret = 0;
 	} else {
-		m_xCharPos = m_text[m_yCaret]->length();
+		m_xCharPos = m_text[m_yCharPos]->length();
 		CalcCaretXPosAndWidth();
 	}
 }
@@ -493,8 +525,8 @@ void NesEditorViewBase<T>::NextChar()
 		m_xCharPos = 0;
 		m_xCaret = 0;
 	} else {
-		int tcnt = m_text[m_yCaret]->length();
-		if (m_text[m_yCaret]->length() <= m_xCharPos) {
+		int tcnt = m_text[m_yCharPos]->length();
+		if (m_text[m_yCharPos]->length() <= m_xCharPos) {
 			m_xCharPos = tcnt;
 		} else {
 			m_xCharPos++;
@@ -509,14 +541,23 @@ void NesEditorViewBase<T>::NextChar()
 template <class T>
 void NesEditorViewBase<T>::PrevLine()
 {
-	if (m_yCaret == 0) {
+	if (m_yCharPos == 0) {
 		return;
 	}
-	m_yCaret--;
-	int tcnt = m_text[m_yCaret]->length();
-	if (m_text[m_yCaret]->length() <= m_xCharPos) {
+	m_yCharPos--;
+
+	int tcnt = m_text[m_yCharPos]->length();
+	if (m_text[m_yCharPos]->length() <= m_xCharPos) {
 		m_xCharPos = tcnt;
 	}
+
+	m_yCaret--;
+//	if (IsCaretWindowTop()) {
+//		MoveScrollPos(0, -1);
+//	} else {
+//		m_yCaret--;
+//	}
+
 	CalcCaretXPosAndWidth();
 }
 
@@ -530,17 +571,26 @@ void NesEditorViewBase<T>::NextLine()
 	if (IsLastLine()) {
 		m_xCharPos = 0;
 		m_xCaret = 0;
-		m_yCaret = m_text.size();
+		m_yCharPos = m_text.size();
 	} else {
-		m_yCaret++;
+		m_yCharPos++;
 		if (IsLastLine()) {
 			m_xCharPos = 0;
 			m_xCaret = 0;
-			m_yCaret = m_text.size();
+			m_yCharPos = m_text.size();
 			return;
 		}
-		int tcnt = m_text[m_yCaret]->length();
-		if (m_text[m_yCaret]->length() <= m_xCharPos) {
+
+		m_yCaret++;
+//		if (IsCaretWindowBottom()) {
+//			//this->Scroll(0, m_yScrollPos + 1);
+//			MoveScrollPos(0, 1);
+//		} else {
+//			m_yCaret++;
+//		}
+
+		int tcnt = m_text[m_yCharPos]->length();
+		if (m_text[m_yCharPos]->length() <= m_xCharPos) {
 			m_xCharPos = tcnt;
 		}
 		CalcCaretXPosAndWidth();
@@ -553,7 +603,7 @@ void NesEditorViewBase<T>::AddNewLine()
 	if (IsLastLine()) {
 		m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT(""))));
 	} else {
-		m_text.insert(m_text.begin() + m_yCaret+1,
+		m_text.insert(m_text.begin() + m_yCharPos+1,
 				std::unique_ptr<wxString>(new wxString(wxT(""))));
 	}
 
@@ -563,7 +613,7 @@ void NesEditorViewBase<T>::AddNewLine()
 //	size_t h = m_yMargin + (m_text.size() * m_heightChar);
 
 
-	DrawTextLine(m_yCaret);
+	DrawTextLine(m_yCharPos);
 }
 
 /**
@@ -578,7 +628,7 @@ void NesEditorViewBase<T>::CalcCaretXPosAndWidth()
 		return;
 	} else {
 		wxString::const_iterator s;
-		wxString &str = *m_text[m_yCaret];
+		wxString &str = *m_text[m_yCharPos];
 		s = str.begin();
 		for (size_t i=0; i < m_xCharPos; ++i, ++s) {
 			wxUniChar uni_ch = *s;
@@ -609,9 +659,55 @@ wxPoint NesEditorViewBase<T>::GetCaretPixelPoint()
 template <class T>
 bool NesEditorViewBase<T>::IsLastLine()
 {
-	return (m_text.size() < m_yCaret+1);
+	return (m_text.size() < m_yCharPos+1);
 }
 
+
+template <class T>
+void NesEditorViewBase<T>::CorrectScrollPos()
+{
+}
+
+/**
+ * -1:上にフレームアウト
+ *  1:下にフレームアウト
+ *  0:フレーム内
+ */
+template <class T>
+int NesEditorViewBase<T>::IsCaretExistsWindowArea()
+{
+	wxPoint cp = this->GetCaret()->GetPosition();
+
+	return 0;
+}
+
+template <class T>
+bool NesEditorViewBase<T>::IsCaretWindowTop()
+{
+	return (m_yCaret == 0);
+}
+
+template <class T>
+bool NesEditorViewBase<T>::IsCaretWindowBottom()
+{
+	wxSize s = this->GetSize();
+	size_t winH = s.GetHeight();
+	size_t caretY = (m_yCaret + 2) * m_heightChar;
+	bool bRet = false;
+	if ( winH <= caretY ) {
+		bRet = true;
+	}
+	return bRet;
+}
+
+template <class T>
+void NesEditorViewBase<T>::MoveScrollPos(int dx, int dy)
+{
+	m_yScrollPos += dy;
+	this->Scroll(0, m_yScrollPos);
+	//this->ScrollPages(1);
+	//this->ScrollLines((i++));
+}
 
 // ------------------------------
 // 文字列操作関連
@@ -633,7 +729,7 @@ void NesEditorViewBase<T>::InsertStr(wxString& str)
 	if (IsLastLine()) {
 		AddNewLine();
 	}
-	wxString &text = *m_text[m_yCaret];
+	wxString &text = *m_text[m_yCharPos];
 	text.insert(m_xCharPos, str);
 	m_xCharPos += str.length();
 	CalcCaretXPosAndWidth();
@@ -886,7 +982,6 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	SetSurface();
 
 	m_syntaxAnalyzer = std::unique_ptr<CTextColorBase>(new CTextColorNesEngineAsm());
-
 
 	//TODO ↓↓TEST↓↓
 	m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT("1abcde adc あいうえお ;aaaaaaa"))));
