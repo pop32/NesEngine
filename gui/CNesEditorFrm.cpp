@@ -6,6 +6,7 @@
  *
  *  Bug
  *   ・TODO 20170102_3 キャレットがいろいろとバグっているので自作する。
+ *       →sakuraエディタもwin32apiのキャレットを使っていたので、今のやつ治せないか頑張ってみる・・・
  *   ・TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
  *
  *  TODO
@@ -222,6 +223,8 @@ void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
 	wxPaintDC dc(this);
 	this->PrepareDC(dc);
 
+	AdjustCaretPos();
+
 //	wxPoint p = dc.GetDeviceOrigin();
 ////	m_dc.SetDeviceOrigin(p.x, p.y);
 //	//m_dc.SetLogicalOrigin(0, 0);
@@ -240,6 +243,9 @@ void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
 	// スクロールするとき、↑アップデート領域がおかしい。
 	// TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
 	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &m_dc, wxPoint(0,0));
+
+//	// m_yScrollPosの値がちゃんと取れるようになったので、ちょっと節約
+//       → バグっている
 //	size_t y = m_yScrollPos * m_heightChar;
 //	dc.Blit(wxPoint(0,y), this->GetSize(), &m_dc, wxPoint(0,y));
 
@@ -331,6 +337,50 @@ void NesEditorViewBase<T>::OnSize(wxSizeEvent& event)
 	event.Skip(false);
 }
 
+template <class T>
+void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
+{
+	//TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
+	if (event.GetOrientation() == wxVERTICAL) {
+		// ※TOPまたはBOTTOMに到着しても、LINEUP,LINEDOWNイベントが発生するので補正追加
+//		wxEventType scrollType(event.GetEventType());
+		int diff = this->CalcScrollInc(event);
+		if (diff != 0) {
+			m_yScrollPos += diff;
+			this->Refresh();
+
+			// BUG スクロールしきる前にキャレットが描画されるので、ずれる！！！
+			// wxwidgets側でスクロール処理が実施されている？
+			// その後のイベントがほしいがない、OnPaintでキャレット位置補正で逃げれそう。
+			// AdjustCaretPos();
+		}
+	}
+//	int x, y;
+//	this->CalcUnscrolledPosition(0, 0, &x, &y);
+
+}
+
+template <class T>
+void NesEditorViewBase<T>::OnScroll(wxScrollEvent& event)
+{
+	event.Skip();
+}
+
+template <class T>
+void NesEditorViewBase<T>::OnKillFocus(wxFocusEvent& event)
+{
+	// wxwidgets側でkillcaretされている。
+}
+
+
+template <class T>
+void NesEditorViewBase<T>::OnSetFocus(wxFocusEvent& event)
+{
+	// wxwidgets側でcaret表示制御がされえちるけれど、
+	// キャレットがウィンドウ枠外に居るときも、表示されてしまうので補正
+	AdjustCaretPos();
+}
+
 // ------------------------------
 // キーボード操作関連
 // ------------------------------
@@ -395,50 +445,17 @@ void NesEditorViewBase<T>::DoKeyRight(wxKeyEvent &event)
 template <class T>
 void NesEditorViewBase<T>::DoKeyUp(wxKeyEvent &event)
 {
-	CorrectScrollPos();
+	AdjustScrollPos();
 	PrevLine();
 }
 
 template <class T>
 void NesEditorViewBase<T>::DoKeyDown(wxKeyEvent &event)
 {
-	CorrectScrollPos();
+	AdjustScrollPos();
 	NextLine();
 }
 
-
-template <class T>
-void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
-{
-	//TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
-	if (event.GetOrientation() == wxVERTICAL) {
-		// ※TOPまたはBOTTOMに到着しても、LINEUP,LINEDOWNイベントが発生するので補正追加
-//		wxEventType scrollType(event.GetEventType());
-		int diff = this->CalcScrollInc(event);
-		if (diff != 0) {
-			m_yScrollPos += diff;
-			this->Refresh();
-
-			if (IsCaretExistsWindowArea() != 0) {
-				//this->GetCaret()->Hide();
-				//this->GetCaret()->Show(false);
-			} else {
-				CorrectCarretPos();
-				DoMoveCaret();
-				//this->GetCaret()->Show();
-			}
-		}
-	}
-//	int x, y;
-//	this->CalcUnscrolledPosition(0, 0, &x, &y);
-
-}
-
-template <class T>
-void NesEditorViewBase<T>::OnScroll(wxScrollEvent& event)
-{
-	event.Skip();
-}
 
 // ------------------------------
 // キャレット操作関連
@@ -659,30 +676,44 @@ bool NesEditorViewBase<T>::IsLastLine()
 
 
 template <class T>
-void NesEditorViewBase<T>::CorrectCarretPos()
+void NesEditorViewBase<T>::AdjustCaretPos()
 {
-//	size_t carretPos = m_yCharPos * m_heightChar;	//キャレット(物理位置）
-//	size_t winY1 = m_yScrollPos * m_heightChar;		// スクロール位置からy1座標計算(物理位置）
+	// キャレットがウィンドウ内にある
 	if (IsCaretExistsWindowArea() == 0) {
 		m_yCaret = (m_yCharPos) - m_yScrollPos;
+
+		if (!this->GetCaret()->IsVisible()) {
+			this->GetCaret()->Show();
+		}
+
+		DoMoveCaret();
+	} else {
+		if (this->GetCaret()->IsVisible()) {
+			this->GetCaret()->Hide();
+		}
 	}
 
 }
 
 
-
 template <class T>
-void NesEditorViewBase<T>::CorrectScrollPos()
+void NesEditorViewBase<T>::AdjustScrollPos()
 {
 	int caretArea = IsCaretExistsWindowArea();
 
 	// 上にフレームアウト
 	if (caretArea < 0) {
-		BackScrollPosToTop();
+		m_yScrollPos = m_yCharPos;		// スクロール位置を現在編集中の行にする
+		m_yCaret = 0;					// キャレット位置補正
+		this->Scroll(0, m_yScrollPos);
 
 		// 下にフレームアウト
 	} else if (caretArea > 0) {
-		BackScrollPosToBottom();
+		wxSize s = this->GetSize();
+		int bottom = (int)(s.GetHeight() / m_heightChar);
+		m_yScrollPos = m_yCharPos - bottom;		// 現在編集中の行から↑にウィンドウサイズ分移動
+		//m_yCharPos = m_yScrollPos;
+		this->Scroll(0, m_yScrollPos);
 
 	}
 
@@ -737,24 +768,6 @@ void NesEditorViewBase<T>::MoveScrollPos(int dx, int dy)
 	this->Scroll(0, m_yScrollPos);
 	//this->ScrollPages(1);
 	//this->ScrollLines((i++));
-}
-
-template <class T>
-void NesEditorViewBase<T>::BackScrollPosToTop()
-{
-	m_yScrollPos = m_yCharPos;		// スクロール位置を現在編集中の行にする
-	m_yCaret = 0;					// キャレット位置補正
-	this->Scroll(0, m_yScrollPos);
-}
-
-template <class T>
-void NesEditorViewBase<T>::BackScrollPosToBottom()
-{
-	wxSize s = this->GetSize();
-	int bottom = (int)(s.GetHeight() / m_heightChar);
-	m_yScrollPos = m_yCharPos - bottom;		// 現在編集中の行から↑にウィンドウサイズ分移動
-	//m_yCharPos = m_yScrollPos;
-	this->Scroll(0, m_yScrollPos);
 }
 
 // ------------------------------
@@ -1013,7 +1026,8 @@ wxBEGIN_EVENT_TABLE(NesEditorView, wxScrolledWindow)
 	EVT_KEY_DOWN(NesEditorView::OnKeyDown)
 	EVT_SCROLLWIN(NesEditorView::OnScrollWin)
 	EVT_SIZE(NesEditorView::OnSize)
-
+	EVT_SET_FOCUS(NesEditorView::OnSetFocus)
+	EVT_KILL_FOCUS(NesEditorView::OnKillFocus)
 //	EVT_SCROLL(NesEditorView::OnScroll)
 	//EVT_ERASE_BACKGROUND(MyCanvas::OnEraseBackground)
 wxEND_EVENT_TABLE()

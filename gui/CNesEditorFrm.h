@@ -60,6 +60,8 @@ protected:
 	void OnScrollWin(wxScrollWinEvent& event);
 	void OnScroll(wxScrollEvent& event);
 	void OnSize(wxSizeEvent& event);
+	void OnKillFocus(wxFocusEvent& event);
+	void OnSetFocus(wxFocusEvent& event);
 	//void OnEraseBackground( wxEraseEvent &event );
 
 	// キーボード操作
@@ -72,6 +74,9 @@ protected:
 	void DoKeyDown(wxKeyEvent &event);
 
 	// キャレット操作
+	void ShowCaret();
+	void DestroyCaret();
+
 	void DoMoveCaret();
 	void Home();
 	void End();
@@ -89,14 +94,12 @@ protected:
 	wxPoint GetCaretPixelPoint();
 	bool IsLastLine();
 
-	void CorrectCarretPos();
-	void CorrectScrollPos();
+	void AdjustCaretPos();
+	void AdjustScrollPos();
 	int IsCaretExistsWindowArea();
 	bool IsCaretWindowTop();
 	bool IsCaretWindowBottom();
 	void MoveScrollPos(int dx, int dy);
-	void BackScrollPosToTop();
-	void BackScrollPosToBottom();
 
 	// テキスト操作
 	void InsertStr(wxChar ch);
