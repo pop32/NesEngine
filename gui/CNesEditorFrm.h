@@ -86,7 +86,7 @@ protected:
 	void NextChar();
 	void PrevLine();
 	void NextLine();
-	void AddNewLine();
+	void AddNewLine(bool bRefresh = true);
 
 	void CalcCaretXPosAndWidth();
 	size_t GetStringPixelWidth(wxString& str);
@@ -111,8 +111,8 @@ protected:
 	void DrawText(wxString& text, wxCoord col, wxCoord row, bool bRefresh = true);
 	void DrawTextTest(wxString& text, wxCoord col, wxCoord row);
 
-	void SetScroll();
-	void SetSurface();
+	void SetScroll(bool bRefresh = true);
+	void SetSurface(bool bRefresh = true);
 };
 
 

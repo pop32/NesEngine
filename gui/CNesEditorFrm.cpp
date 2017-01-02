@@ -5,12 +5,15 @@
  *	  Author: kyon
  *
  *  Bug
- *   ・TODO 20170102_3 キャレットがいろいろとバグっているので自作する。
- *       →sakuraエディタもwin32apiのキャレットを使っていたので、今のやつ治せないか頑張ってみる・・・
  *   ・TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
  *
- *  TODO
- *   ・複数単語変換処理
+ *  TODO一覧
+ *   ・TODO 20170103_03 画面クリックでキャレット位置更新
+ *   ・TODO 20170103_04 画面の文字列選択とコピー
+ *   ・TODO 20170103_05 エンターなど押下時、文字列のライン移動など
+ *   ・TODO 20170103_01 複数単語変換処理
+ *   ・TODO 20170103_02 候補文字列の編集処理・描画処理
+ *   ・TODO メモリリークしていない？
  *
  */
 
@@ -119,6 +122,7 @@ NesEditorViewBase<T>::NesEditorViewBase(wxFrame *parent)
 
 	viewBkColor = *wxWHITE;
 
+	// TODO メモリリークしていない？
 	wxBitmap bmp(50, 50);
 	wxMemoryDC dc(bmp);
 	dc.SetFont(m_font);
@@ -156,14 +160,14 @@ WXLRESULT NesEditorViewBase<T>::MSWWindowProc(WXUINT message, WXWPARAM wParam, W
 
 #ifdef __WINDOWS__
 
+	// TODO 20170103_01 複数単語変換処理
+	// TODO 20170103_02 候補文字列の編集処理・描画処理
 	// IME確定／編集中操作
 	case WM_IME_COMPOSITION:
 	{
 		wchar_t szBuf[1024] = {'\0'};
 		HIMC hImc = ImmGetContext(this->GetHWND());
 
-		// TODO 複数単語変換処理
-		// TODO 候補文字列の編集処理・描画処理
 
 		// 確定
 		if (lParam & GCS_RESULTSTR) {
@@ -223,6 +227,7 @@ void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
 	wxPaintDC dc(this);
 	this->PrepareDC(dc);
 
+	// スクロールイベントでキャレット位置を補正するとずれるので、ここで補正
 	AdjustCaretPos();
 
 //	wxPoint p = dc.GetDeviceOrigin();
@@ -300,8 +305,13 @@ void NesEditorViewBase<T>::OnChar( wxKeyEvent &event )
 
 		default:
 			if ( !event.AltDown() && wxIsprint(event.GetKeyCode()) ) {
+
 				wxChar ch = (wxChar)event.GetKeyCode();
-				InsertStr(ch);
+				wxUniChar uch = ch;
+				if (uch.IsAscii()) {
+					InsertStr(ch);
+				}
+
 			} else {
 				event.Skip();
 			}
@@ -331,18 +341,17 @@ template <class T>
 void NesEditorViewBase<T>::OnSize(wxSizeEvent& event)
 {
 //	this->SetSize(event.GetSize());
-	SetScroll();
-	SetSurface();
-
+	SetScroll(false);
+	SetSurface(false);
+	this->Refresh();
 	event.Skip(false);
 }
 
 template <class T>
 void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
 {
-	//TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
 	if (event.GetOrientation() == wxVERTICAL) {
-		// ※TOPまたはBOTTOMに到着しても、LINEUP,LINEDOWNイベントが発生するので補正追加
+		// ※TOPまたはBOTTOMに到達しても、LINEUP,LINEDOWNイベントが発生するので補正追加
 //		wxEventType scrollType(event.GetEventType());
 		int diff = this->CalcScrollInc(event);
 		if (diff != 0) {
@@ -355,8 +364,6 @@ void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
 			// AdjustCaretPos();
 		}
 	}
-//	int x, y;
-//	this->CalcUnscrolledPosition(0, 0, &x, &y);
 
 }
 
@@ -376,7 +383,7 @@ void NesEditorViewBase<T>::OnKillFocus(wxFocusEvent& event)
 template <class T>
 void NesEditorViewBase<T>::OnSetFocus(wxFocusEvent& event)
 {
-	// wxwidgets側でcaret表示制御がされえちるけれど、
+	// wxwidgets側でcaret表示制御されているけれど、
 	// キャレットがウィンドウ枠外に居るときも、表示されてしまうので補正
 	AdjustCaretPos();
 }
@@ -433,7 +440,6 @@ template <class T>
 void NesEditorViewBase<T>::DoKeyLeft(wxKeyEvent &event)
 {
 	PrevChar();
-	//CorrectScrollPos();
 }
 
 template <class T>
@@ -445,14 +451,12 @@ void NesEditorViewBase<T>::DoKeyRight(wxKeyEvent &event)
 template <class T>
 void NesEditorViewBase<T>::DoKeyUp(wxKeyEvent &event)
 {
-	AdjustScrollPos();
 	PrevLine();
 }
 
 template <class T>
 void NesEditorViewBase<T>::DoKeyDown(wxKeyEvent &event)
 {
-	AdjustScrollPos();
 	NextLine();
 }
 
@@ -558,6 +562,9 @@ void NesEditorViewBase<T>::PrevLine()
 	if (m_yCharPos == 0) {
 		return;
 	}
+	// キャレット補正前に一旦現在のスクロール位置補正
+	AdjustScrollPos();
+
 	m_yCharPos--;
 
 	int tcnt = m_text[m_yCharPos]->length();
@@ -566,11 +573,13 @@ void NesEditorViewBase<T>::PrevLine()
 	}
 
 	if (IsCaretWindowTop()) {
+		// PGからスクロールさせると、スクロールイベントが発生しないので呼び出し ※内部変数更新用
 		MoveScrollPos(0, -1);
 	} else {
 		m_yCaret--;
 	}
 
+	// TODO これ、キャレット補正関数にまとめたい
 	CalcCaretXPosAndWidth();
 }
 
@@ -586,31 +595,49 @@ void NesEditorViewBase<T>::NextLine()
 		m_xCaret = 0;
 		m_yCharPos = m_text.size();
 	} else {
+
 		m_yCharPos++;
 		if (IsLastLine()) {
 			m_xCharPos = 0;
 			m_xCaret = 0;
 			m_yCharPos = m_text.size();
-			return;
-		}
 
-		if (IsCaretWindowBottom()) {
-			//this->Scroll(0, m_yScrollPos + 1);
-			MoveScrollPos(0, 1);
+			// キャレットが画面上一番下なら、キャレットは動かさない
+			if (IsCaretWindowBottom()) {
+				// PGからスクロールさせると、スクロールイベントが発生しないので呼び出し ※内部変数更新用
+				// たぶんほとんど下通る。
+				MoveScrollPos(0, 1);
+			} else {
+				AdjustCaretPos();
+			}
+
 		} else {
-			m_yCaret++;
-		}
+			int tcnt = m_text[m_yCharPos]->length();
+			if (m_text[m_yCharPos]->length() <= m_xCharPos) {
+				m_xCharPos = tcnt;
+			}
 
-		int tcnt = m_text[m_yCharPos]->length();
-		if (m_text[m_yCharPos]->length() <= m_xCharPos) {
-			m_xCharPos = tcnt;
+			// TODO これ、キャレット補正関数にまとめたい
+			CalcCaretXPosAndWidth();
+
+			// キャレット補正前に一旦現在のスクロール位置補正
+			AdjustScrollPos();
+
+			// キャレットが画面上一番下なら、キャレットは動かさない
+			if (IsCaretWindowBottom()) {
+				// PGからスクロールさせると、スクロールイベントが発生しないので呼び出し ※内部変数更新用
+				MoveScrollPos(0, 1);
+			} else {
+				m_yCaret++;
+			}
 		}
-		CalcCaretXPosAndWidth();
+		// スクロール位置を補正
+		// AdjustScrollPos();
 	}
 }
 
 template <class T>
-void NesEditorViewBase<T>::AddNewLine()
+void NesEditorViewBase<T>::AddNewLine(bool bRefresh)
 {
 	if (IsLastLine()) {
 		m_text.push_back(std::unique_ptr<wxString>(new wxString(wxT(""))));
@@ -619,13 +646,12 @@ void NesEditorViewBase<T>::AddNewLine()
 				std::unique_ptr<wxString>(new wxString(wxT(""))));
 	}
 
-	SetScroll();
-	SetSurface();
-//	// スクロール設定
-//	size_t h = m_yMargin + (m_text.size() * m_heightChar);
-
-
-	DrawTextLine(m_yCharPos);
+	SetScroll(false);
+	SetSurface(false);
+	DrawTextLine(m_yCharPos, false);
+	if (bRefresh) {
+		this->Refresh();
+	}
 }
 
 /**
@@ -788,14 +814,14 @@ template <class T>
 void NesEditorViewBase<T>::InsertStr(wxString& str)
 {
 	if (IsLastLine()) {
-		AddNewLine();
+		AddNewLine(false);
 	}
 	wxString &text = *m_text[m_yCharPos];
 	text.insert(m_xCharPos, str);
 	m_xCharPos += str.length();
 	CalcCaretXPosAndWidth();
-	DrawText(text, 0, m_yCaret);
-
+	DrawText(text, 0, m_yCharPos, false);
+	this->Refresh();
 }
 
 /**
@@ -843,6 +869,7 @@ size_t NesEditorViewBase<T>::GetStringBLen(wxString& str)
 template <class T>
 void NesEditorViewBase<T>::PrintEdittingMultiByteStr(wxString &str)
 {
+	// TODO 20170103_01 複数単語変換処理
 	//DrawText(str, m_xCaret, m_yCaret, false);
 }
 
@@ -937,8 +964,11 @@ void NesEditorViewBase<T>::DrawTextTest(wxString& str, wxCoord col, wxCoord row)
 	this->Refresh();
 }
 
+/**
+ * スクロール幅設定
+ */
 template <class T>
-void NesEditorViewBase<T>::SetScroll()
+void NesEditorViewBase<T>::SetScroll(bool bRefresh)
 {
 	//TODO 横スクロールの設定
 	size_t line = m_text.size();
@@ -951,15 +981,24 @@ void NesEditorViewBase<T>::SetScroll()
 				, m_heightChar
 				, 1, unoY, 0, FALSE );
 		m_yMaxScrollPos = unoY;
+		this->Scroll(0, m_yScrollPos);
 	} else {
+		// スクロールなし
 		this->SetScrollbars(1, 1, 0, FALSE);
 		m_yMaxScrollPos = 0;
 	}
-	this->Refresh();
+
+	if (bRefresh) {
+		this->Refresh();
+	}
+
 }
 
+/**
+ * 背景描画面設定
+ */
 template <class T>
-void NesEditorViewBase<T>::SetSurface()
+void NesEditorViewBase<T>::SetSurface(bool bRefresh)
 {
 	// ※スクロール設定側で文字幅考慮したウィンドウサイズ設定しているので
 	//   VirtualSizeでとってきている
@@ -992,7 +1031,7 @@ void NesEditorViewBase<T>::SetSurface()
 //		m_dc.SetLogicalOrigin(0, 0);
 		//this->PrepareDC(m_dc);
 		m_dc.Clear();
-		DrawTextAll(true);
+		DrawTextAll(bRefresh);
 		return;
 	}
 
@@ -1007,7 +1046,7 @@ void NesEditorViewBase<T>::SetSurface()
 //		m_dc.SetLogicalOrigin(0, 0);
 		//this->PrepareDC(m_dc);
 		m_dc.Clear();
-		DrawTextAll(true);
+		DrawTextAll(bRefresh);
 		return;
 	}
 
