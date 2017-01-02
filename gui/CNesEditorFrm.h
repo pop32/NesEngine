@@ -35,17 +35,17 @@ protected:
 //	wxBitmap m_bitmap;
 
 	wxFont m_font;
-	wxFont m_fontEditting;
-	wxFont m_fontComment;
+	wxFont m_fontEditting;						// 使っていない（余裕があれば）
+	wxFont m_fontComment;						// 使っていない
 
 	wxColor viewBkColor;
 
 	size_t m_heightChar, m_widthChar;
-	size_t m_xCharPos, m_yCharPos;
-	size_t m_xCaret, m_yCaret;
-	size_t m_xMargin, m_yMargin;
-	size_t m_xScrollPos, m_yScrollPos;
-	size_t m_xMaxScrollPos, m_yMaxScrollPos;
+	size_t m_xCharPos, m_yCharPos;				// 現在編集中の行
+	size_t m_xCaret, m_yCaret;					// キャレット位置（画面上）
+	size_t m_xMargin, m_yMargin;				// 使っていない（スクロールがバグるので）※sizerで何とかする予定
+	size_t m_xScrollPos, m_yScrollPos;			// スクロール位置（ユニット単位）
+	size_t m_xMaxScrollPos, m_yMaxScrollPos;	// 使っていない
 
 	std::unique_ptr<CTextColorBase> m_syntaxAnalyzer;
 	vector<std::unique_ptr<wxString>> m_text;
@@ -89,11 +89,14 @@ protected:
 	wxPoint GetCaretPixelPoint();
 	bool IsLastLine();
 
+	void CorrectCarretPos();
 	void CorrectScrollPos();
 	int IsCaretExistsWindowArea();
 	bool IsCaretWindowTop();
 	bool IsCaretWindowBottom();
 	void MoveScrollPos(int dx, int dy);
+	void BackScrollPosToTop();
+	void BackScrollPosToBottom();
 
 	// テキスト操作
 	void InsertStr(wxChar ch);

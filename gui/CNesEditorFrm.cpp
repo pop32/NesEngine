@@ -5,6 +5,7 @@
  *	  Author: kyon
  *
  *  Bug
+ *   ・TODO 20170102_3 キャレットがいろいろとバグっているので自作する。
  *   ・TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
  *
  *  TODO
@@ -389,22 +390,20 @@ template <class T>
 void NesEditorViewBase<T>::DoKeyRight(wxKeyEvent &event)
 {
 	NextChar();
-	//CorrectScrollPos();
 }
 
 template <class T>
 void NesEditorViewBase<T>::DoKeyUp(wxKeyEvent &event)
 {
+	CorrectScrollPos();
 	PrevLine();
-	//CorrectScrollPos();
 }
 
 template <class T>
 void NesEditorViewBase<T>::DoKeyDown(wxKeyEvent &event)
 {
+	CorrectScrollPos();
 	NextLine();
-	IsCaretExistsWindowArea();
-	//CorrectScrollPos();
 }
 
 
@@ -416,27 +415,23 @@ void NesEditorViewBase<T>::OnScrollWin(wxScrollWinEvent& event)
 		// ※TOPまたはBOTTOMに到着しても、LINEUP,LINEDOWNイベントが発生するので補正追加
 //		wxEventType scrollType(event.GetEventType());
 		int diff = this->CalcScrollInc(event);
-		m_yScrollPos += diff;
-//		if (scrollType == wxEVT_SCROLLWIN_LINEDOWN) {
-//			int test = event.GetPosition();
-//			if (m_yScrollPos != m_yMaxScrollPos) {
-//				m_yScrollPos++;
-//			}
-//		} else if (scrollType == wxEVT_SCROLLWIN_LINEUP) {
-//			int test = event.GetPosition();
-//
-//			if (m_yScrollPos != 0) {
-//				m_yScrollPos--;
-//			}
-//		}else if (scrollType == wxEVT_SCROLLWIN_TOP) {
-//			m_yScrollPos = 0;
-//		}else if (scrollType == wxEVT_SCROLLWIN_BOTTOM) {
-//			m_yScrollPos = m_yMaxScrollPos;
-//		}
+		if (diff != 0) {
+			m_yScrollPos += diff;
+			this->Refresh();
+
+			if (IsCaretExistsWindowArea() != 0) {
+				//this->GetCaret()->Hide();
+				//this->GetCaret()->Show(false);
+			} else {
+				CorrectCarretPos();
+				DoMoveCaret();
+				//this->GetCaret()->Show();
+			}
+		}
 	}
 //	int x, y;
 //	this->CalcUnscrolledPosition(0, 0, &x, &y);
-	this->Refresh();
+
 }
 
 template <class T>
@@ -457,6 +452,8 @@ void NesEditorViewBase<T>::DoMoveCaret()
 {
 	this->GetCaret()->Move(m_xMargin + m_xCaret * m_widthChar,
 					 m_yMargin + m_yCaret * m_heightChar);
+//	this->GetCaret()->Move(m_xMargin + m_xCaret * m_widthChar,
+//					 m_yMargin + m_yCharPos * m_heightChar);
 	//this->GetCaret()->SetSize(m_widthChar, m_heightChar);
 
 }
@@ -551,12 +548,11 @@ void NesEditorViewBase<T>::PrevLine()
 		m_xCharPos = tcnt;
 	}
 
-	m_yCaret--;
-//	if (IsCaretWindowTop()) {
-//		MoveScrollPos(0, -1);
-//	} else {
-//		m_yCaret--;
-//	}
+	if (IsCaretWindowTop()) {
+		MoveScrollPos(0, -1);
+	} else {
+		m_yCaret--;
+	}
 
 	CalcCaretXPosAndWidth();
 }
@@ -581,13 +577,12 @@ void NesEditorViewBase<T>::NextLine()
 			return;
 		}
 
-		m_yCaret++;
-//		if (IsCaretWindowBottom()) {
-//			//this->Scroll(0, m_yScrollPos + 1);
-//			MoveScrollPos(0, 1);
-//		} else {
-//			m_yCaret++;
-//		}
+		if (IsCaretWindowBottom()) {
+			//this->Scroll(0, m_yScrollPos + 1);
+			MoveScrollPos(0, 1);
+		} else {
+			m_yCaret++;
+		}
 
 		int tcnt = m_text[m_yCharPos]->length();
 		if (m_text[m_yCharPos]->length() <= m_xCharPos) {
@@ -664,8 +659,33 @@ bool NesEditorViewBase<T>::IsLastLine()
 
 
 template <class T>
+void NesEditorViewBase<T>::CorrectCarretPos()
+{
+//	size_t carretPos = m_yCharPos * m_heightChar;	//キャレット(物理位置）
+//	size_t winY1 = m_yScrollPos * m_heightChar;		// スクロール位置からy1座標計算(物理位置）
+	if (IsCaretExistsWindowArea() == 0) {
+		m_yCaret = (m_yCharPos) - m_yScrollPos;
+	}
+
+}
+
+
+
+template <class T>
 void NesEditorViewBase<T>::CorrectScrollPos()
 {
+	int caretArea = IsCaretExistsWindowArea();
+
+	// 上にフレームアウト
+	if (caretArea < 0) {
+		BackScrollPosToTop();
+
+		// 下にフレームアウト
+	} else if (caretArea > 0) {
+		BackScrollPosToBottom();
+
+	}
+
 }
 
 /**
@@ -676,7 +696,17 @@ void NesEditorViewBase<T>::CorrectScrollPos()
 template <class T>
 int NesEditorViewBase<T>::IsCaretExistsWindowArea()
 {
-	wxPoint cp = this->GetCaret()->GetPosition();
+	wxSize winSize = this->GetSize();
+//	wxPoint cp = this->GetCaret()->GetPosition();
+	size_t caretPos = m_yCharPos * m_heightChar;	//キャレット(物理位置）
+	size_t winY1 = m_yScrollPos * m_heightChar;		// スクロール位置からy1座標計算(物理位置）
+	size_t winY2 = winY1 + winSize.GetHeight();		// スクロール位置＋画面の高さ(物理位置）
+	if (caretPos < winY1) {
+		return -1;
+	}
+	if (caretPos > winY2) {
+		return 1;
+	}
 
 	return 0;
 }
@@ -707,6 +737,24 @@ void NesEditorViewBase<T>::MoveScrollPos(int dx, int dy)
 	this->Scroll(0, m_yScrollPos);
 	//this->ScrollPages(1);
 	//this->ScrollLines((i++));
+}
+
+template <class T>
+void NesEditorViewBase<T>::BackScrollPosToTop()
+{
+	m_yScrollPos = m_yCharPos;		// スクロール位置を現在編集中の行にする
+	m_yCaret = 0;					// キャレット位置補正
+	this->Scroll(0, m_yScrollPos);
+}
+
+template <class T>
+void NesEditorViewBase<T>::BackScrollPosToBottom()
+{
+	wxSize s = this->GetSize();
+	int bottom = (int)(s.GetHeight() / m_heightChar);
+	m_yScrollPos = m_yCharPos - bottom;		// 現在編集中の行から↑にウィンドウサイズ分移動
+	//m_yCharPos = m_yScrollPos;
+	this->Scroll(0, m_yScrollPos);
 }
 
 // ------------------------------
@@ -923,6 +971,8 @@ void NesEditorViewBase<T>::SetSurface()
 		size_t h = (((int)(winHeight / m_heightChar)) * m_heightChar) + addHeight;
 		size_t w = (((int)(winWidth / m_widthChar)) * m_widthChar) + addWidth;
 		wxSize bmpSize(w, h);
+		// TODO メモリリークしていない？
+		// TODO メモリリークの検知手法
 		wxBitmap bmp = wxBitmap(bmpSize);
 		m_dc.SelectObject(bmp);
 //		m_dc.SetDeviceOrigin(0, 0);
