@@ -5,6 +5,8 @@
  *	  Author: kyon
  *
  *  Bug
+ *   ・TODO 画面サイズ変更でいろいろバグる
+ *
  *   ・TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
  *
  *  TODO一覧
@@ -341,8 +343,16 @@ template <class T>
 void NesEditorViewBase<T>::OnSize(wxSizeEvent& event)
 {
 //	this->SetSize(event.GetSize());
+	// スクロールの領域を再設定
 	SetScroll(false);
+
+	// 背景DC再設定
 	SetSurface(false);
+
+	//AdjustScrollPos();
+	AdjustCaretPos();
+
+
 	this->Refresh();
 	event.Skip(false);
 }
