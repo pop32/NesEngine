@@ -249,14 +249,14 @@ void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
 
 	// スクロールするとき、↑アップデート領域がおかしい。
 	// TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
-	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &m_dc, wxPoint(0,0));
+//	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &m_dc, wxPoint(0,0));
 
 //	// m_yScrollPosの値がちゃんと取れるようになったので、ちょっと節約
 //       → バグっている
 //	size_t y = m_yScrollPos * m_heightChar;
 //	dc.Blit(wxPoint(0,y), this->GetSize(), &m_dc, wxPoint(0,y));
 
-	//dc.DrawBitmap(m_bitmap, wxPoint(0,0));
+	dc.DrawBitmap(m_bitmap, wxPoint(0,0));
 
 }
 
@@ -350,10 +350,10 @@ void NesEditorViewBase<T>::OnSize(wxSizeEvent& event)
 	SetSurface(false);
 
 	//AdjustScrollPos();
-	AdjustCaretPos();
+	//AdjustCaretPos();
 
 
-	this->Refresh();
+	//this->Refresh();
 	event.Skip(false);
 }
 
@@ -404,7 +404,7 @@ void NesEditorViewBase<T>::OnSetFocus(wxFocusEvent& event)
 template <class T>
 void NesEditorViewBase<T>::DoKeyEnter(wxKeyEvent &event)
 {
-	AddNewLine();
+	AddNewLine(false);
 	NextLine();
 
 }
@@ -909,8 +909,8 @@ void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row, boo
 {
 	//this->PrepareDC(m_dc); ←スクロールするとずれるので呼ばない
 
-//	wxMemoryDC dc(m_bitmap);
-	wxMemoryDC& dc = m_dc;
+	wxMemoryDC dc(m_bitmap);
+//	wxMemoryDC& dc = m_dc;
 
 	dc.SetPen(*wxWHITE);
 	dc.SetBrush(*wxWHITE);
@@ -985,17 +985,31 @@ void NesEditorViewBase<T>::SetScroll(bool bRefresh)
 	wxRect winRect = this->GetClientRect();
 	int winH = m_heightChar * (line + 1);
 	if (winRect.height <= winH) {
-		int unoY =((int)(winH - winRect.height) / m_heightChar) +
-				((int)winRect.height / m_heightChar) + 10;
+		size_t gamenLine = ((int)(winRect.height) / m_heightChar);
+		size_t unoY =gamenLine 										// 画面に収まる行数
+				+ ((int)(winH - winRect.height) / m_heightChar);	// はみ出た行数
+
+		// 画面サイズ変更時、画面を大きくすると一番上の現在画面位置までスクロールできなくなるので補正
+		if (unoY < m_yScrollPos + gamenLine) {
+			unoY += (m_yScrollPos + gamenLine) - unoY;
+		}
+//		this->SetScrollbars( 0
+//				, m_heightChar
+//				, 1, unoY, 0, 0 );
+//		m_yMaxScrollPos = unoY;
+//		this->Scroll(0, m_yScrollPos);
+
+		// スクロール位置をスクロールバー設定時に指定するよう修正
+		// 一度０に戻してからスクロールするとちらつく
 		this->SetScrollbars( 0
 				, m_heightChar
-				, 1, unoY, 0, FALSE );
-		m_yMaxScrollPos = unoY;
-		this->Scroll(0, m_yScrollPos);
+				, 1, unoY, 0, m_yScrollPos );
+
 	} else {
 		// スクロールなし
 		this->SetScrollbars(1, 1, 0, FALSE);
-		m_yMaxScrollPos = 0;
+		m_yScrollPos = 0;
+		//m_yMaxScrollPos = 0;
 	}
 
 	if (bRefresh) {
@@ -1035,8 +1049,11 @@ void NesEditorViewBase<T>::SetSurface(bool bRefresh)
 		wxSize bmpSize(w, h);
 		// TODO メモリリークしていない？
 		// TODO メモリリークの検知手法
-		wxBitmap bmp = wxBitmap(bmpSize);
-		m_dc.SelectObject(bmp);
+		//wxBitmap bmp = wxBitmap(bmpSize);
+		m_bitmap = wxBitmap(bmpSize);
+
+//		m_dc.SelectObject(bmp);
+		m_dc.SelectObject(m_bitmap);
 //		m_dc.SetDeviceOrigin(0, 0);
 //		m_dc.SetLogicalOrigin(0, 0);
 		//this->PrepareDC(m_dc);
@@ -1050,8 +1067,10 @@ void NesEditorViewBase<T>::SetSurface(bool bRefresh)
 		size_t h = (((int)(winHeight / m_heightChar)) * m_heightChar) + addHeight;
 		size_t w = (((int)(winWidth / m_widthChar)) * m_widthChar) + addWidth;
 		wxSize bmpSize(w, h);
-		wxBitmap bmp = wxBitmap(bmpSize);
-		m_dc.SelectObject(bmp);
+		//wxBitmap bmp = wxBitmap(bmpSize);
+		m_bitmap = wxBitmap(bmpSize);
+//		m_dc.SelectObject(bmp);
+		m_dc.SelectObject(m_bitmap);
 //		m_dc.SetDeviceOrigin(0, 0);
 //		m_dc.SetLogicalOrigin(0, 0);
 		//this->PrepareDC(m_dc);
@@ -1136,7 +1155,9 @@ NesEditorView::NesEditorView(wxFrame *parent)
 	SetScroll();
 	DrawTextAll(true);
 
-
+//	this->SetScrollbars( 0
+//			, m_heightChar
+//			, 1, unoY, 0, m_yScrollPos );
 //	CTextColorNesEngineAsm tasm;
 //	wxString aaa = wxT("aaaa;bbbb");
 //	//tasm.operator=(aaa);

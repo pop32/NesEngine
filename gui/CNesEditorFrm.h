@@ -32,7 +32,7 @@ public:
 
 protected:
 	wxMemoryDC m_dc;
-//	wxBitmap m_bitmap;
+	wxBitmap m_bitmap;
 
 	wxFont m_font;
 	wxFont m_fontEditting;						// 使っていない（余裕があれば）
