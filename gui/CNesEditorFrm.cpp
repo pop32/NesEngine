@@ -5,8 +5,6 @@
  *	  Author: kyon
  *
  *  Bug
- *   ・TODO 画面サイズ変更でいろいろバグる
- *
  *   ・TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
  *
  *  TODO一覧
@@ -253,10 +251,10 @@ void NesEditorViewBase<T>::OnPaint( wxPaintEvent& event )
 
 //	// m_yScrollPosの値がちゃんと取れるようになったので、ちょっと節約
 //       → バグっている
-//	size_t y = m_yScrollPos * m_heightChar;
-//	dc.Blit(wxPoint(0,y), this->GetSize(), &m_dc, wxPoint(0,y));
+	size_t y = m_yScrollPos * m_heightChar;
+	dc.Blit(wxPoint(0,y), this->GetSize(), &m_dc, wxPoint(0,y));
 
-	dc.DrawBitmap(m_bitmap, wxPoint(0,0));
+//	dc.DrawBitmap(m_bitmap, wxPoint(0,0));
 
 }
 
@@ -909,8 +907,8 @@ void NesEditorViewBase<T>::DrawText(wxString& str, wxCoord col, wxCoord row, boo
 {
 	//this->PrepareDC(m_dc); ←スクロールするとずれるので呼ばない
 
-	wxMemoryDC dc(m_bitmap);
-//	wxMemoryDC& dc = m_dc;
+//	wxMemoryDC dc(m_bitmap);
+	wxMemoryDC& dc = m_dc;
 
 	dc.SetPen(*wxWHITE);
 	dc.SetBrush(*wxWHITE);
@@ -1049,11 +1047,11 @@ void NesEditorViewBase<T>::SetSurface(bool bRefresh)
 		wxSize bmpSize(w, h);
 		// TODO メモリリークしていない？
 		// TODO メモリリークの検知手法
-		//wxBitmap bmp = wxBitmap(bmpSize);
-		m_bitmap = wxBitmap(bmpSize);
+		wxBitmap bmp = wxBitmap(bmpSize);
+//		m_bitmap = wxBitmap(bmpSize);
 
-//		m_dc.SelectObject(bmp);
-		m_dc.SelectObject(m_bitmap);
+		m_dc.SelectObject(bmp);
+//		m_dc.SelectObject(m_bitmap);
 //		m_dc.SetDeviceOrigin(0, 0);
 //		m_dc.SetLogicalOrigin(0, 0);
 		//this->PrepareDC(m_dc);
@@ -1067,10 +1065,10 @@ void NesEditorViewBase<T>::SetSurface(bool bRefresh)
 		size_t h = (((int)(winHeight / m_heightChar)) * m_heightChar) + addHeight;
 		size_t w = (((int)(winWidth / m_widthChar)) * m_widthChar) + addWidth;
 		wxSize bmpSize(w, h);
-		//wxBitmap bmp = wxBitmap(bmpSize);
-		m_bitmap = wxBitmap(bmpSize);
-//		m_dc.SelectObject(bmp);
-		m_dc.SelectObject(m_bitmap);
+		wxBitmap bmp = wxBitmap(bmpSize);
+//		m_bitmap = wxBitmap(bmpSize);
+		m_dc.SelectObject(bmp);
+//		m_dc.SelectObject(m_bitmap);
 //		m_dc.SetDeviceOrigin(0, 0);
 //		m_dc.SetLogicalOrigin(0, 0);
 		//this->PrepareDC(m_dc);
