@@ -6,6 +6,7 @@
  *
  *  Bug
  *   ・TODO 20170102_2 うまくいかないので、スクロールがきたらとりあえず全描画。
+ *   ・TODO 小 キャレット一番下でスクロールできないときは、キャレット隠す
  *
  *  TODO一覧
  *   ・TODO 20170103_03 画面クリックでキャレット位置更新
@@ -404,7 +405,7 @@ void NesEditorViewBase<T>::DoKeyEnter(wxKeyEvent &event)
 {
 	AddNewLine(false);
 	NextLine();
-
+	this->Refresh();
 }
 
 template <class T>
