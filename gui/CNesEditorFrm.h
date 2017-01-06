@@ -28,11 +28,31 @@ using namespace std;
 
 namespace NesEngine {
 
-template <class T>
-class NesEditorViewBase : public wxCustomBackgroundWindow<T>
+
+///////////////////////////////////////////////////////////////////////////////
+// 行番号表示用クラス
+///////////////////////////////////////////////////////////////////////////////
+class NesEditorLineNumberView : public wxCustomBackgroundWindow<wxWindow>
 {
 public:
-	NesEditorViewBase(wxFrame *parent);
+//	NesEditorLineNumberView(wxFrame *parent);
+	NesEditorLineNumberView(wxWindow *parent);
+
+protected:
+	wxMemoryDC m_dc;
+
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+// エディタメイン処理ベース
+///////////////////////////////////////////////////////////////////////////////
+template <class T>
+class NesEditorMainViewBase : public wxCustomBackgroundWindow<T>
+{
+public:
+//	NesEditorMainViewBase(wxFrame *parent);
+	NesEditorMainViewBase(wxWindow *parent);
 
 protected:
 	wxMemoryDC m_dc;
@@ -120,14 +140,33 @@ protected:
 };
 
 
-class NesEditorView : public NesEditorViewBase<wxScrolledWindow>
+///////////////////////////////////////////////////////////////////////////////
+// エディタメイン処理
+///////////////////////////////////////////////////////////////////////////////
+class NesEditorMainView : public NesEditorMainViewBase<wxScrolledWindow>
 {
 public:
-	NesEditorView(wxFrame *parent);
+//	NesEditorMainView(wxFrame *parent);
+	NesEditorMainView(wxWindow *parent);
 
 private:
 
 	wxDECLARE_EVENT_TABLE();
+
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// エディタパネル ※フレームからはこちらを呼び出す
+///////////////////////////////////////////////////////////////////////////////
+class NesEditor : public wxWindow
+{
+public:
+	NesEditor(wxWindow *parent,
+			wxWindowID winid = wxID_ANY,
+			const wxPoint& pos = wxDefaultPosition,
+			const wxSize& size = wxDefaultSize,
+			long style = wxTAB_TRAVERSAL | wxNO_BORDER,
+			const wxString& name = wxPanelNameStr);
 
 };
 
