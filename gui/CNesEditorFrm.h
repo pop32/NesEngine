@@ -20,6 +20,10 @@
 #include "CTextColorBase.h"
 #include "CTextColorNesEngineAsm.h"
 
+#include "../resource/new.xpm"
+#include "../resource/open.xpm"
+#include "../resource/save.xpm"
+
 using namespace std;
 
 namespace NesEngine {
@@ -136,6 +140,7 @@ public:
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnSize(wxSizeEvent& event);
+	void OnToolLeftClick(wxCommandEvent& event);
 
 private:
 

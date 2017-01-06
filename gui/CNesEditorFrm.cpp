@@ -31,6 +31,8 @@ namespace NesEngine {
 wxBEGIN_EVENT_TABLE(CNesEditorFrm, wxFrame)
 	EVT_MENU(CNesEditorFrm_Quit,  CNesEditorFrm::OnQuit)
 	EVT_MENU(CNesEditorFrm_About, CNesEditorFrm::OnAbout)
+	EVT_MENU(wxID_ANY, CNesEditorFrm::OnToolLeftClick)
+
 //	EVT_SIZE(CNesEditorFrm::OnSize)
 //	EVT_TIMER(CNesEditorFrm_TestTimer, CNesEditorFrm::OnTimer)
 wxEND_EVENT_TABLE()
@@ -71,6 +73,55 @@ CNesEditorFrm::CNesEditorFrm(wxFrame *parent, const wxString& title, const wxPoi
 	// ... and attach this menu bar to the frame
 	SetMenuBar(menuBar);
 
+
+	// ツールバー設定
+	wxToolBarBase *toolBar = GetToolBar();
+	delete toolBar;
+	SetToolBar(NULL);
+	long style = wxTB_FLAT | wxTB_DOCKABLE ;
+	toolBar = CreateToolBar(style, 9998);
+
+	enum
+	{
+		Tool_new,
+		Tool_open,
+		Tool_save,
+		Tool_Max
+	};
+
+	wxBitmap toolBarBitmaps[Tool_Max];
+
+#define INIT_TOOL_BMP(bmp) \
+    toolBarBitmaps[Tool_##bmp] = wxBitmap(bmp##_xpm)
+
+	INIT_TOOL_BMP(new);
+	INIT_TOOL_BMP(open);
+	INIT_TOOL_BMP(save);
+
+	int w = toolBarBitmaps[Tool_new].GetScaledWidth(),
+			h = toolBarBitmaps[Tool_new].GetScaledHeight();
+
+	toolBar->SetToolBitmapSize(wxSize(w, h));
+
+	toolBar->AddTool(wxID_NEW, wxT("New"),
+					toolBarBitmaps[Tool_new], wxT("New file"));
+
+	//	wxMenu* menu = new wxMenu;
+	//	menu->Append(wxID_ANY, wxT("&First dummy item"));
+	//	menu->Append(wxID_ANY, wxT("&Second dummy item"));
+	//	menu->AppendSeparator();
+	//	menu->Append(wxID_EXIT, wxT("Exit"));
+	//	toolBar->SetDropdownMenu(wxID_NEW, menu);
+
+	toolBar->AddTool(wxID_OPEN, wxT("Open"),
+					toolBarBitmaps[Tool_open], wxT("Open file"));
+
+	toolBar->AddTool(wxID_SAVE, wxT("Save"),
+					toolBarBitmaps[Tool_save], wxT("Save file"));
+
+	toolBar->Realize();
+
+
 	wxBoxSizer *topBox = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer *vbox = new wxBoxSizer(wxVERTICAL);
 
@@ -108,6 +159,13 @@ void CNesEditorFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
 	wxMessageBox(wxT("The caret NesEngine .\n(c) 2016 pop32")
 			,wxT("About") , wxOK | wxICON_INFORMATION, this);
+}
+
+void CNesEditorFrm::OnToolLeftClick(wxCommandEvent& event)
+{
+	wxString str;
+	str.Printf( wxT("Clicked on tool %d\n"), event.GetId());
+	int a = 0;
 }
 
 // ----------------------------------------------------------------------------
@@ -1002,7 +1060,7 @@ void NesEditorViewBase<T>::SetScroll(bool bRefresh)
 		// 一度０に戻してからスクロールするとちらつく
 		this->SetScrollbars( 0
 				, m_heightChar
-				, 1, unoY, 0, m_yScrollPos );
+				, 1, unoY + 5, 0, m_yScrollPos );
 
 	} else {
 		// スクロールなし
