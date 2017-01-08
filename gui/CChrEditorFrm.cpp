@@ -9,6 +9,16 @@
 
 namespace NesEngine {
 
+///////////////////////////////////////////////////////////////////////////////
+// メインフレーム
+///////////////////////////////////////////////////////////////////////////////
+
+wxBEGIN_EVENT_TABLE(CChrEditorFrm, wxFrame)
+	EVT_MENU(CChrEditorFrm_Quit,  CChrEditorFrm::OnQuit)
+	EVT_MENU(CChrEditorFrm_About, CChrEditorFrm::OnAbout)
+	EVT_MENU(wxID_ANY, CChrEditorFrm::OnToolLeftClick)
+wxEND_EVENT_TABLE()
+
 CChrEditorFrm::CChrEditorFrm(wxFrame *parent, const wxString& title, const wxPoint& pos, const wxSize& size)
 {
 
@@ -19,11 +29,175 @@ CChrEditorFrm::CChrEditorFrm(wxFrame *parent, const wxString& title, const wxPoi
 		return;
 	}
 
+	SetIcon(wxICON(sample));
+
+	wxMenu *menuFile = new wxMenu;
+
+	menuFile->Append(CChrEditorFrm_About, wxT("&About\tCtrl-A"), wxT("Show about dialog"));
+	menuFile->AppendSeparator();
+	menuFile->Append(CChrEditorFrm_Quit, wxT("E&xit\tAlt-X"), wxT("Quit this program"));
+
+	wxMenuBar *menuBar = new wxMenuBar;
+	menuBar->Append(menuFile, wxT("&File"));
+	SetMenuBar(menuBar);
+
+	// ツールバー設定
+	wxToolBarBase *toolBar = GetToolBar();
+	delete toolBar;
+	SetToolBar(NULL);
+	long style = wxTB_FLAT | wxTB_DOCKABLE ;
+	toolBar = CreateToolBar(style, 9998);
+
+	enum
+	{
+		Tool_new,
+		Tool_open,
+		Tool_save,
+		Tool_Max
+	};
+
+	wxBitmap toolBarBitmaps[Tool_Max];
+
+	INIT_TOOL_BMP(new);
+	INIT_TOOL_BMP(open);
+	INIT_TOOL_BMP(save);
+
+	int w = toolBarBitmaps[Tool_new].GetScaledWidth(),
+			h = toolBarBitmaps[Tool_new].GetScaledHeight();
+
+	toolBar->SetToolBitmapSize(wxSize(w, h));
+
+	toolBar->AddTool(wxID_NEW, wxT("New"),
+					toolBarBitmaps[Tool_new], wxT("New file"));
+
+	toolBar->AddTool(wxID_OPEN, wxT("Open"),
+					toolBarBitmaps[Tool_open], wxT("Open file"));
+
+	toolBar->AddTool(wxID_SAVE, wxT("Save"),
+					toolBarBitmaps[Tool_save], wxT("Save file"));
+
+	toolBar->Realize();
+
+
+	wxBoxSizer *hBox = new wxBoxSizer(wxHORIZONTAL);
+	hBox->Add(new CChrEditorView(this, m_chrData, wxID_ANY,wxDefaultPosition, wxSize(500,500))
+				, 0				// 横伸縮可
+				, wxEXPAND
+				, 0);
+
+	SetSizer(hBox);
+}
+//
+//CChrEditorFrm::~CChrEditorFrm() {
+//	// TODO Auto-generated destructor stub
+//}
+//
+//
+
+// -----------------
+// event handlers
+// -----------------
+
+void CChrEditorFrm::OnQuit(wxCommandEvent& WXUNUSED(event))
+{
+	// true is to force the frame to close
+	Close(true);
+}
+
+void CChrEditorFrm::OnAbout(wxCommandEvent& WXUNUSED(event))
+{
+	wxMessageBox(wxT("The caret NesEngine .\n(c) 2016 pop32")
+			,wxT("About") , wxOK | wxICON_INFORMATION, this);
+}
+
+void CChrEditorFrm::OnToolLeftClick(wxCommandEvent& event)
+{
+	wxString str;
+	str.Printf( wxT("Clicked on tool %d\n"), event.GetId());
+	int a = 0;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// 画像編集メイン
+///////////////////////////////////////////////////////////////////////////////
+
+
+wxBEGIN_EVENT_TABLE(CChrEditorView, wxScrolledWindow)
+	EVT_PAINT(CChrEditorView::OnPaint)
+
+wxEND_EVENT_TABLE()
+
+
+CChrEditorView::CChrEditorView(wxWindow *parent,
+		const CChrData& chrData,
+		wxWindowID winid,
+		const wxPoint& pos,
+		const wxSize& size,
+		long style,
+		const wxString& name)
+ : m_chrData(chrData)
+{
+
+	if ( !this->Create(parent, winid,
+						pos, size,
+						style,  name)) {
+		return;
+	}
+
+	nBiritu = 1;
+	nBlockSize = BLOCK_SIZE * nBiritu;
+
+	SetSurface();
+	DrawSurface();
+}
+
+
+/**
+ * 描画イベント
+ */
+void CChrEditorView::OnPaint( wxPaintEvent& event )
+{
+	wxPaintDC dc(this);
+	this->PrepareDC(dc);
+	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &m_dc, wxPoint(0,0));
+}
+
+
+
+void CChrEditorView::SetSurface()
+{
+
+	wxBitmap bmp = wxBitmap(this->GetVirtualSize());
+	m_dc.SelectObject(bmp);
+	m_dc.Clear();
 
 }
 
-CChrEditorFrm::~CChrEditorFrm() {
-	// TODO Auto-generated destructor stub
+void CChrEditorView::DrawSurface()
+{
+	wxDC& dc = m_dc;
+
+	// wxSize s = this->GetVirtualSize();
+	wxPen pen(*wxBLACK, 1);
+	dc.SetPen(pen);
+	dc.SetBrush(*wxBLACK);
+
+	for (int r = 0; r < GUI_CCHREDITORFRM_H_BLOCK_NUM_ROW; r++) {
+		for (int c = 0; c < GUI_CCHREDITORFRM_H_BLOCK_NUM_COL; c++) {
+			int size = (BLOCK_SIZE + (LINE_SIZE * 2));
+			int x1 = c * size;
+			int y1 = r * size;
+			dc.DrawRectangle(wxPoint(x1 ,y1), wxSize(size,size));
+		}
+	}
 }
+
+
+//CChrEditorView::~CChrEditorView() {
+//	// TODO Auto-generated destructor stub
+//}
+
 
 } /* namespace NesEngine */

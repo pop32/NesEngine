@@ -19,10 +19,8 @@
 #include <wx/caret.h>
 #include "CTextColorBase.h"
 #include "CTextColorNesEngineAsm.h"
-
-#include "../resource/new.xpm"
-#include "../resource/open.xpm"
-#include "../resource/save.xpm"
+#include "CCommon.h"
+#include "Resource.h"
 
 using namespace std;
 

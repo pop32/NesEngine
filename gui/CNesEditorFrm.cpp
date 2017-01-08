@@ -91,9 +91,6 @@ CNesEditorFrm::CNesEditorFrm(wxFrame *parent, const wxString& title, const wxPoi
 
 	wxBitmap toolBarBitmaps[Tool_Max];
 
-#define INIT_TOOL_BMP(bmp) \
-    toolBarBitmaps[Tool_##bmp] = wxBitmap(bmp##_xpm)
-
 	INIT_TOOL_BMP(new);
 	INIT_TOOL_BMP(open);
 	INIT_TOOL_BMP(save);

@@ -94,7 +94,7 @@ void CMainFrm::OnChrEditor(wxCommandEvent& WXUNUSED(event))
 {
 	// TODO memory leak ???
 	NesEngine::CChrEditorFrm *frm = new NesEngine::CChrEditorFrm(this, wxT("Chr Editor"),
-						wxPoint(50, 50), wxSize(650, 440));
+						wxPoint(50, 50), wxSize(650, 540));
 	frm->Show(TRUE);
 
 }
