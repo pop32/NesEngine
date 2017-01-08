@@ -13,6 +13,7 @@
 
 #include "CMemoryDumpFrm.h"
 #include "CNesEditorFrm.h"
+#include "CChrEditorFrm.h"
 
 namespace NesEngine {
 
@@ -26,6 +27,7 @@ public:
 	void OnAbout(wxCommandEvent& event);
 	void OnMemoryDump(wxCommandEvent& event);
 	void OnNesEditor(wxCommandEvent& event);
+	void OnChrEditor(wxCommandEvent& event);
 
 private:
 
@@ -46,6 +48,7 @@ enum
 	CMainFrm_About,
 	CMainFrm_MemoryDump,
 	CMainFrm_NesEditor,
+	CMainFrm_ChrEditor,
 };
 
 } /* namespace NesEngine */
