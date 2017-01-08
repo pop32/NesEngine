@@ -80,7 +80,7 @@ CChrEditorFrm::CChrEditorFrm(wxFrame *parent, const wxString& title, const wxPoi
 
 
 	wxBoxSizer *hBox = new wxBoxSizer(wxHORIZONTAL);
-	hBox->Add(new CChrEditorView(this, m_chrData, wxID_ANY,wxDefaultPosition, wxSize(500,500))
+	hBox->Add(new CChrEditorView(this, wxID_ANY,wxDefaultPosition, wxSize(500,500))
 				, 0				// 横伸縮可
 				, wxEXPAND
 				, 0);
@@ -114,7 +114,126 @@ void CChrEditorFrm::OnToolLeftClick(wxCommandEvent& event)
 {
 	wxString str;
 	str.Printf( wxT("Clicked on tool %d\n"), event.GetId());
-	int a = 0;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// グリッド
+///////////////////////////////////////////////////////////////////////////////
+CNesEngineGridBase::CNesEngineGridBase(wxWindow *parent,
+		wxWindowID winid,
+		const wxPoint& pos,
+		const wxSize& size,
+		long style,
+		const wxString& name)
+{
+	SetSurface();
+	DrawSurface();
+}
+
+//void CNesEngineGridBase::AppendCols(int cols)
+//{
+//	nColNum = cols;
+//}
+//
+//
+//void CNesEngineGridBase::AppendRows(int rows)
+//{
+//	nRowNum = rows;
+//
+//
+//}
+
+//void CNesEngineGridBase::AddCells()
+//{
+//	if (nColNum == 0 || nRowNum == 0) {
+//		return;
+//	}
+//
+//	//m_cells
+//}
+
+void CNesEngineGridBase::InitCells(int cols, int rows)
+{
+	nColNum = cols;
+	nRowNum = rows;
+	if (nColNum == 0 || nRowNum == 0) {
+		return;
+	}
+	m_cells.clear();
+
+	for (int r = 0; r < rows; r++) {
+		for (int c = 0; c < cols; c++) {
+			m_cells.push_back(std::unique_ptr<CNesEnineGridCell>(new CNesEnineGridCell(c, r)));
+		}
+	}
+}
+
+void CNesEngineGridBase::SetCellSize(wxSize size)
+{
+	//cellSize = size;
+
+
+}
+
+void CNesEngineGridBase::SetValue(int col, int row, wxString val)
+{
+	int cellIdx = col * row;
+	if (m_cells.size() < cellIdx) {
+		return;
+	}
+
+
+}
+
+
+/**
+ * 描画イベント
+ */
+void CNesEngineGridBase::OnPaint( wxPaintEvent& event )
+{
+	wxPaintDC dc(this);
+	this->PrepareDC(dc);
+	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &m_dc, wxPoint(0,0));
+}
+
+
+void CNesEngineGridBase::SetSurface()
+{
+
+	wxBitmap bmp = wxBitmap(this->GetVirtualSize());
+	m_dc.SelectObject(bmp);
+	m_dc.Clear();
+
+}
+
+void CNesEngineGridBase::DrawSurface()
+{
+
+//	if (cellSize.GetWidth() == 0 || cellSize.GetHeight() == 0) {
+//		return;
+//	}
+
+	if (nColNum == 0 || nRowNum == 0) {
+		return;
+	}
+
+
+	wxDC& dc = m_dc;
+
+//	// wxSize s = this->GetVirtualSize();
+//	wxPen pen(*wxBLACK, 1);
+//	dc.SetPen(pen);
+//	dc.SetBrush(*wxBLACK);
+//
+//	for (int r = 0; r < GUI_CCHREDITORFRM_H_BLOCK_NUM_ROW; r++) {
+//		for (int c = 0; c < GUI_CCHREDITORFRM_H_BLOCK_NUM_COL; c++) {
+//			int size = (BLOCK_SIZE + (LINE_SIZE * 2));
+//			int x1 = c * size;
+//			int y1 = r * size;
+//			dc.DrawRectangle(wxPoint(x1 ,y1), wxSize(size,size));
+//		}
+//	}
 }
 
 
@@ -131,68 +250,32 @@ wxEND_EVENT_TABLE()
 
 
 CChrEditorView::CChrEditorView(wxWindow *parent,
-		const CChrData& chrData,
 		wxWindowID winid,
 		const wxPoint& pos,
 		const wxSize& size,
 		long style,
 		const wxString& name)
- : m_chrData(chrData)
+ : CNesEngineGridBase(parent, winid, pos, size, style, name)
 {
 
-	if ( !this->Create(parent, winid,
-						pos, size,
-						style,  name)) {
-		return;
-	}
-
+//	if ( !this->Create(parent, winid,
+//						pos, size,
+//						style,  name)) {
+//		return;
+//	}
+//
 	nBiritu = 1;
-	nBlockSize = BLOCK_SIZE * nBiritu;
+	nBlockSize = 8 * nBiritu;
+//	AppendCols(8);
+//	AppendRows(8);
+	SetCellSize(wxSize(10,10));
 
-	SetSurface();
-	DrawSurface();
+//
+//	SetSurface();
+//	DrawSurface();
 }
 
 
-/**
- * 描画イベント
- */
-void CChrEditorView::OnPaint( wxPaintEvent& event )
-{
-	wxPaintDC dc(this);
-	this->PrepareDC(dc);
-	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &m_dc, wxPoint(0,0));
-}
-
-
-
-void CChrEditorView::SetSurface()
-{
-
-	wxBitmap bmp = wxBitmap(this->GetVirtualSize());
-	m_dc.SelectObject(bmp);
-	m_dc.Clear();
-
-}
-
-void CChrEditorView::DrawSurface()
-{
-	wxDC& dc = m_dc;
-
-	// wxSize s = this->GetVirtualSize();
-	wxPen pen(*wxBLACK, 1);
-	dc.SetPen(pen);
-	dc.SetBrush(*wxBLACK);
-
-	for (int r = 0; r < GUI_CCHREDITORFRM_H_BLOCK_NUM_ROW; r++) {
-		for (int c = 0; c < GUI_CCHREDITORFRM_H_BLOCK_NUM_COL; c++) {
-			int size = (BLOCK_SIZE + (LINE_SIZE * 2));
-			int x1 = c * size;
-			int y1 = r * size;
-			dc.DrawRectangle(wxPoint(x1 ,y1), wxSize(size,size));
-		}
-	}
-}
 
 
 //CChrEditorView::~CChrEditorView() {

@@ -9,7 +9,9 @@
 #define GUI_CCHREDITORFRM_H_
 
 #include <stdio.h>
-#include <memory.h>
+#include <string>
+#include <vector>
+#include <memory>
 #include <wx/wxprec.h>
 #include <wx/wx.h>
 #include <wx/custombgwin.h>
@@ -18,33 +20,87 @@
 #include "CCommon.h"
 #include "Resource.h"
 
+using namespace std;
+
 namespace NesEngine {
 
 #define GUI_CCHREDITORFRM_H_BLOCK_NUM_COL 8
 #define GUI_CCHREDITORFRM_H_BLOCK_NUM_ROW 8
 
-class CChrData
+
+///////////////////////////////////////////////////////////////////////////////
+// グリッド
+///////////////////////////////////////////////////////////////////////////////
+
+class CNesEnineGridCell
 {
 public:
-	CChrData() {
-		memset(data, 0, sizeof(data));
+	CNesEnineGridCell(int nColNum, int nRowNum)
+	{
+		m_nColNum = nColNum;
+		m_nRowNum = nRowNum;
 	};
-	virtual ~CChrData(){};
 
-	int data[GUI_CCHREDITORFRM_H_BLOCK_NUM_COL][GUI_CCHREDITORFRM_H_BLOCK_NUM_ROW];
+	virtual ~CNesEnineGridCell(){};
+
+	void SetBackGroundColor(wxColor color);
+	void SetValue(wxString val);
+
+private:
+	int m_nColNum;
+	int m_nRowNum;
+	wxColor m_bkColor;
+	wxString m_val;
+};
+
+
+class CNesEngineGridBase : public wxScrolledWindow
+{
+public:
+	CNesEngineGridBase(wxWindow *parent,
+			wxWindowID winid = wxID_ANY,
+			const wxPoint& pos = wxDefaultPosition,
+			const wxSize& size = wxDefaultSize,
+			long style = wxTAB_TRAVERSAL | wxNO_BORDER,
+			const wxString& name = wxPanelNameStr);
+
+//	void AppendCols(int cols);			// 使っていない
+//	void AppendRows(int rows);			// 使っていない
+//	void SetCellWidth(int width);
+//	void SetCellHeight(int height);
+
+	void InitCells(int cols, int rows);
+	void SetCellSize(wxSize size);
+	void SetValue(int col, int row, wxString val);
+
+protected:
+	wxMemoryDC m_dc;
+	void OnPaint( wxPaintEvent &event );
+
+private:
+	int nColNum;
+	int nRowNum;
+
+	vector<std::unique_ptr<CNesEnineGridCell>> m_cells;
+
+//	void AddCells();
+
+	void SetSurface();
+	void DrawSurface();
+
 
 };
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // 画像編集メイン
 ///////////////////////////////////////////////////////////////////////////////
 
-class CChrEditorView : public wxScrolledWindow
+class CChrEditorView : public CNesEngineGridBase
 {
 
 public:
 	CChrEditorView(wxWindow *parent,
-			const CChrData& chrData,
 			wxWindowID winid = wxID_ANY,
 			const wxPoint& pos = wxDefaultPosition,
 			const wxSize& size = wxDefaultSize,
@@ -53,20 +109,10 @@ public:
 	//virtual ~CChrEditorView();
 
 private:
-	static const int BLOCK_SIZE = 4;
-	static const int LINE_SIZE = 1;
 
 	int nBiritu;
 	int nBlockSize;
 
-	wxMemoryDC m_dc;
-
-	const CChrData& m_chrData;
-
-	void OnPaint( wxPaintEvent &event );
-
-	void SetSurface();
-	void DrawSurface();
 
 	wxDECLARE_EVENT_TABLE();
 
@@ -84,8 +130,6 @@ public:
 //	virtual ~CChrEditorFrm();
 
 private:
-	CChrData m_chrData;
-
 	void OnQuit(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnToolLeftClick(wxCommandEvent& event);
