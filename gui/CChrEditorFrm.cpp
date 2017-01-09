@@ -120,6 +120,12 @@ void CChrEditorFrm::OnToolLeftClick(wxCommandEvent& event)
 ///////////////////////////////////////////////////////////////////////////////
 // グリッド
 ///////////////////////////////////////////////////////////////////////////////
+
+wxBEGIN_EVENT_TABLE(CNesEngineGridBase, wxScrolledWindow)
+	EVT_PAINT(CNesEngineGridBase::OnPaint)
+
+wxEND_EVENT_TABLE()
+
 CNesEngineGridBase::CNesEngineGridBase(wxWindow *parent,
 		wxWindowID winid,
 		const wxPoint& pos,
@@ -127,31 +133,18 @@ CNesEngineGridBase::CNesEngineGridBase(wxWindow *parent,
 		long style,
 		const wxString& name)
 {
+
+	if ( !this->Create(parent, wxID_ANY,
+						pos, size,
+						style, name)) {
+		return;
+	}
+	nColNum = 0;
+	nRowNum = 0;
+
 	SetSurface();
 	DrawSurface();
 }
-
-//void CNesEngineGridBase::AppendCols(int cols)
-//{
-//	nColNum = cols;
-//}
-//
-//
-//void CNesEngineGridBase::AppendRows(int rows)
-//{
-//	nRowNum = rows;
-//
-//
-//}
-
-//void CNesEngineGridBase::AddCells()
-//{
-//	if (nColNum == 0 || nRowNum == 0) {
-//		return;
-//	}
-//
-//	//m_cells
-//}
 
 void CNesEngineGridBase::InitCells(int cols, int rows)
 {
@@ -167,23 +160,28 @@ void CNesEngineGridBase::InitCells(int cols, int rows)
 			m_cells.push_back(std::unique_ptr<CNesEnineGridCell>(new CNesEnineGridCell(c, r)));
 		}
 	}
+
+	DrawSurface();
 }
 
 void CNesEngineGridBase::SetCellSize(wxSize size)
 {
-	//cellSize = size;
-
+	cellSize = size;
+	DrawSurface();
 
 }
 
-void CNesEngineGridBase::SetValue(int col, int row, wxString val)
+void CNesEngineGridBase::SetValue(int col, int row, wxString& val)
 {
-	int cellIdx = col * row;
+	size_t cellIdx = col * row;
 	if (m_cells.size() < cellIdx) {
 		return;
 	}
 
+	CNesEnineGridCell& cell = *(m_cells[col * row].get());
+	cell.SetValue(val);
 
+	DrawSurface();
 }
 
 
@@ -214,28 +212,28 @@ void CNesEngineGridBase::DrawSurface()
 //		return;
 //	}
 
+	wxDC& dc = m_dc;
+	dc.Clear();
+
 	if (nColNum == 0 || nRowNum == 0) {
 		return;
 	}
 
+	wxPen pen(*wxBLUE, 1);
+	dc.SetPen(pen);
+	dc.SetBrush(*wxWHITE);
 
-	wxDC& dc = m_dc;
+	for (int r = 0; r < nRowNum; r++) {
+		for (int c = 0; c < nColNum; c++) {
+			int x1 = c * (cellSize.GetWidth() - 1);
+			int y1 = r * (cellSize.GetHeight() - 1);
+			dc.DrawRectangle(wxPoint(x1 ,y1), cellSize);
+		}
+	}
 
-//	// wxSize s = this->GetVirtualSize();
-//	wxPen pen(*wxBLACK, 1);
-//	dc.SetPen(pen);
-//	dc.SetBrush(*wxBLACK);
-//
-//	for (int r = 0; r < GUI_CCHREDITORFRM_H_BLOCK_NUM_ROW; r++) {
-//		for (int c = 0; c < GUI_CCHREDITORFRM_H_BLOCK_NUM_COL; c++) {
-//			int size = (BLOCK_SIZE + (LINE_SIZE * 2));
-//			int x1 = c * size;
-//			int y1 = r * size;
-//			dc.DrawRectangle(wxPoint(x1 ,y1), wxSize(size,size));
-//		}
-//	}
+	this->Refresh();
+
 }
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -243,10 +241,10 @@ void CNesEngineGridBase::DrawSurface()
 ///////////////////////////////////////////////////////////////////////////////
 
 
-wxBEGIN_EVENT_TABLE(CChrEditorView, wxScrolledWindow)
-	EVT_PAINT(CChrEditorView::OnPaint)
-
-wxEND_EVENT_TABLE()
+//wxBEGIN_EVENT_TABLE(CChrEditorView, wxScrolledWindow)
+//	EVT_PAINT(CChrEditorView::OnPaint)
+//
+//wxEND_EVENT_TABLE()
 
 
 CChrEditorView::CChrEditorView(wxWindow *parent,
@@ -258,24 +256,14 @@ CChrEditorView::CChrEditorView(wxWindow *parent,
  : CNesEngineGridBase(parent, winid, pos, size, style, name)
 {
 
-//	if ( !this->Create(parent, winid,
-//						pos, size,
-//						style,  name)) {
-//		return;
-//	}
-//
 	nBiritu = 1;
 	nBlockSize = 8 * nBiritu;
-//	AppendCols(8);
-//	AppendRows(8);
+
+	InitCells(8, 8);
 	SetCellSize(wxSize(10,10));
 
-//
-//	SetSurface();
-//	DrawSurface();
+
 }
-
-
 
 
 //CChrEditorView::~CChrEditorView() {

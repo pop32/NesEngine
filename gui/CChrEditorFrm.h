@@ -44,7 +44,9 @@ public:
 	virtual ~CNesEnineGridCell(){};
 
 	void SetBackGroundColor(wxColor color);
-	void SetValue(wxString val);
+	void SetValue(wxString& val) {
+		m_val = val;
+	};
 
 private:
 	int m_nColNum;
@@ -71,7 +73,7 @@ public:
 
 	void InitCells(int cols, int rows);
 	void SetCellSize(wxSize size);
-	void SetValue(int col, int row, wxString val);
+	void SetValue(int col, int row, wxString& val);
 
 protected:
 	wxMemoryDC m_dc;
@@ -83,11 +85,14 @@ private:
 
 	vector<std::unique_ptr<CNesEnineGridCell>> m_cells;
 
+	wxSize cellSize;
+
 //	void AddCells();
 
 	void SetSurface();
 	void DrawSurface();
 
+	wxDECLARE_EVENT_TABLE();
 
 };
 
@@ -114,7 +119,7 @@ private:
 	int nBlockSize;
 
 
-	wxDECLARE_EVENT_TABLE();
+	//wxDECLARE_EVENT_TABLE();
 
 };
 
