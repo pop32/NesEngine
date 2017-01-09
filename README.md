@@ -11,3 +11,4 @@ mingw の bin パス通せばOK
 
 参考<br>
 - http://bkclass.web.fc2.com/doc_wxsamples.html
+- http://hlc6502.web.fc2.com/NesPal2.htm

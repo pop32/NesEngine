@@ -39,19 +39,71 @@ public:
 	{
 		m_nColNum = nColNum;
 		m_nRowNum = nRowNum;
+
+		m_cellColor = *wxWHITE;
+		m_leftLineColor = *wxBLACK;
+		m_topLineColor = *wxBLACK;
+		m_rightLineColor = *wxBLACK;
+		m_bottomLineColor = *wxBLACK;
+
 	};
 
 	virtual ~CNesEnineGridCell(){};
 
-	void SetBackGroundColor(wxColor color);
+	void SetCellColor(wxColor color)
+	{
+		m_cellColor = color;
+	};
+	void SetLeftLineColor(wxColor color)
+	{
+		m_leftLineColor = color;
+	};
+	void SetTopLineColor(wxColor color)
+	{
+		m_topLineColor = color;
+	};
+	void SetRightLineColor(wxColor color)
+	{
+		m_rightLineColor = color;
+	};
+	void SetBottomLineColor(wxColor color)
+	{
+		m_bottomLineColor = color;
+	};
 	void SetValue(wxString& val) {
 		m_val = val;
+	};
+
+	wxColor GetCellColor()
+	{
+		return m_cellColor;
+	};
+
+	wxColor GetLeftLineColor()
+	{
+		return m_leftLineColor;
+	};
+	wxColor GetTopLineColor()
+	{
+		return m_topLineColor;
+	};
+	wxColor GetRightLineColor()
+	{
+		return m_rightLineColor;
+	};
+	wxColor GetBottomLineColor()
+	{
+		return m_bottomLineColor;
 	};
 
 private:
 	int m_nColNum;
 	int m_nRowNum;
-	wxColor m_bkColor;
+	wxColor m_cellColor;
+	wxColor m_leftLineColor;
+	wxColor m_topLineColor;
+	wxColor m_rightLineColor;
+	wxColor m_bottomLineColor;
 	wxString m_val;
 };
 
@@ -75,9 +127,21 @@ public:
 	void SetCellSize(wxSize size);
 	void SetValue(int col, int row, wxString& val);
 
+	void SetCellColor(int col, int row, wxColor color);
+	void SetCellLineColor(int col, int row,
+			wxColor reftColor,
+			wxColor topColor,
+			wxColor rightColor,
+			wxColor bottomColor
+			);
+
+	CNesEnineGridCell* GetCell(int col, int row);
+
 protected:
 	wxMemoryDC m_dc;
 	void OnPaint( wxPaintEvent &event );
+
+	wxDC& GetSurfaceDC();
 
 private:
 	int nColNum;
@@ -91,7 +155,7 @@ private:
 
 	void SetSurface();
 	void DrawSurface();
-
+	void DrawCell(int col, int row);
 	wxDECLARE_EVENT_TABLE();
 
 };

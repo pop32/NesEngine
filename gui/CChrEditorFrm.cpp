@@ -164,35 +164,10 @@ void CNesEngineGridBase::InitCells(int cols, int rows)
 	DrawSurface();
 }
 
-void CNesEngineGridBase::SetCellSize(wxSize size)
+
+wxDC& CNesEngineGridBase::GetSurfaceDC()
 {
-	cellSize = size;
-	DrawSurface();
-
-}
-
-void CNesEngineGridBase::SetValue(int col, int row, wxString& val)
-{
-	size_t cellIdx = col * row;
-	if (m_cells.size() < cellIdx) {
-		return;
-	}
-
-	CNesEnineGridCell& cell = *(m_cells[col * row].get());
-	cell.SetValue(val);
-
-	DrawSurface();
-}
-
-
-/**
- * 描画イベント
- */
-void CNesEngineGridBase::OnPaint( wxPaintEvent& event )
-{
-	wxPaintDC dc(this);
-	this->PrepareDC(dc);
-	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &m_dc, wxPoint(0,0));
+	return m_dc;
 }
 
 
@@ -205,6 +180,60 @@ void CNesEngineGridBase::SetSurface()
 
 }
 
+void CNesEngineGridBase::SetCellSize(wxSize size)
+{
+	// TODO ここの実装汎用化したい
+	cellSize = size;
+	DrawSurface();
+
+}
+
+void CNesEngineGridBase::SetValue(int col, int row, wxString& val)
+{
+	CNesEnineGridCell* cell = GetCell(col, row);
+	if (cell == nullptr) {
+		return;
+	}
+	cell->SetValue(val);
+
+	DrawSurface();
+}
+
+void CNesEngineGridBase::SetCellColor(int col, int row, wxColor color)
+{
+	CNesEnineGridCell* cell = GetCell(col, row);
+	if (cell == nullptr) {
+		return;
+	}
+	cell->SetCellColor(color);
+}
+
+void CNesEngineGridBase::SetCellLineColor(int col, int row,
+		wxColor leftColor,
+		wxColor topColor,
+		wxColor rightColor,
+		wxColor bottomColor
+		)
+{
+	CNesEnineGridCell* cell = GetCell(col, row);
+	if (cell == nullptr) {
+		return;
+	}
+	cell->SetLeftLineColor(leftColor);
+	cell->SetTopLineColor(topColor);
+	cell->SetRightLineColor(rightColor);
+	cell->SetBottomLineColor(bottomColor);
+}
+
+CNesEnineGridCell* CNesEngineGridBase::GetCell(int col, int row)
+{
+	size_t cellIdx = col * row;
+	if (m_cells.size() < cellIdx) {
+		return nullptr;
+	}
+	return m_cells[cellIdx].get();
+}
+
 void CNesEngineGridBase::DrawSurface()
 {
 
@@ -212,28 +241,76 @@ void CNesEngineGridBase::DrawSurface()
 //		return;
 //	}
 
-	wxDC& dc = m_dc;
+	wxDC& dc = GetSurfaceDC();
 	dc.Clear();
 
 	if (nColNum == 0 || nRowNum == 0) {
 		return;
 	}
 
-	wxPen pen(*wxBLUE, 1);
-	dc.SetPen(pen);
-	dc.SetBrush(*wxWHITE);
-
 	for (int r = 0; r < nRowNum; r++) {
 		for (int c = 0; c < nColNum; c++) {
-			int x1 = c * (cellSize.GetWidth() - 1);
-			int y1 = r * (cellSize.GetHeight() - 1);
-			dc.DrawRectangle(wxPoint(x1 ,y1), cellSize);
+//			int x1 = c * (cellSize.GetWidth() - 1);
+//			int y1 = r * (cellSize.GetHeight() - 1);
+//			dc.DrawRectangle(wxPoint(x1 ,y1), cellSize);
 		}
 	}
 
 	this->Refresh();
 
 }
+
+void CNesEngineGridBase::DrawCell(int col, int row)
+{
+	wxDC& dc = GetSurfaceDC();
+	CNesEnineGridCell* cell = GetCell(col, row);
+	if (cell == nullptr) {
+		return;
+	}
+
+	// TODO ここの実装汎用化したい
+	int x1 = col * (cellSize.GetWidth() - 1);
+	int y1 = row * (cellSize.GetHeight() - 1);
+
+	int x2 = x1 + cellSize.GetWidth();
+	int y2 = y1 + cellSize.GetHeight();
+
+	wxPen pen(1);
+	pen.SetColour(cell->GetLeftLineColor());
+	dc.SetPen(pen);
+	dc.DrawLine(wxPoint(x1, y1), wxPoint(x1, y2));
+
+	pen.SetColour(cell->GetTopLineColor());
+	dc.SetPen(pen);
+	dc.DrawLine(wxPoint(x1, y1), wxPoint(x2, y1));
+
+	pen.SetColour(cell->GetRightLineColor());
+	dc.SetPen(pen);
+	dc.DrawLine(wxPoint(x2, y1), wxPoint(x2, y2));
+
+	pen.SetColour(cell->GetBottomLineColor());
+	dc.SetPen(pen);
+	dc.DrawLine(wxPoint(x1, y2), wxPoint(x2, y2));
+
+	pen.SetColour(cell->GetCellColor());
+	dc.SetBrush(cell->GetCellColor());
+
+
+}
+
+//---------------------------------
+// イベントハンドラ
+//---------------------------------
+/**
+ * 描画イベント
+ */
+void CNesEngineGridBase::OnPaint( wxPaintEvent& event )
+{
+	wxPaintDC dc(this);
+	this->PrepareDC(dc);
+	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &(GetSurfaceDC()), wxPoint(0,0));
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
