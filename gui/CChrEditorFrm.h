@@ -32,6 +32,40 @@ namespace NesEngine {
 // グリッド
 ///////////////////////////////////////////////////////////////////////////////
 
+//---------------------------
+// イベントハンドラ定義
+//---------------------------
+class wxNesEngineGridEvent : public wxNotifyEvent
+{
+public:
+	wxNesEngineGridEvent();
+	wxNesEngineGridEvent(int id,
+							wxEventType type,
+							wxObject* obj)
+		: wxNotifyEvent(id, type)
+	{
+		SetEventObject(obj);
+	};
+private:
+	//DECLARE_DYNAMIC_CLASS_NO_ASSIGN(wxNesEngineGridEvent)
+
+};
+
+typedef void (wxEvtHandler::*wxNesEngineGridEventFunction)(wxNesEngineGridEvent&);
+
+#define wxNesEngineGridEventHandler(func) \
+	wxEVENT_HANDLER_CAST(wxNesEngineGridEventFunction, func)
+
+#define wx__DECLARE_NESENGINE_GRIDEVT(evt, id, fn) \
+    wx__DECLARE_EVT1(wxEVT_NESENGINE_GRID_ ## evt, id, wxNesEngineGridEventHandler(fn))
+
+#define EVT_NESENGINE_GRID_CMD_CELL_LEFT_CLICK(id, fn)     wx__DECLARE_NESENGINE_GRIDEVT(CELL_LEFT_CLICK, id, fn)
+
+#define EVT_NESENGINE_GRID_CELL_LEFT_CLICK(fn)     EVT_NESENGINE_GRID_CMD_CELL_LEFT_CLICK(wxID_ANY, fn)
+
+wxDEFINE_EVENT(wxEVT_NESENGINE_GRID_CELL_LEFT_CLICK, wxNesEngineGridEvent);
+
+
 class CNesEnineGridCell
 {
 public:
@@ -139,9 +173,10 @@ public:
 
 protected:
 	wxMemoryDC m_dc;
-	void OnPaint( wxPaintEvent &event );
-
 	wxDC& GetSurfaceDC();
+
+	void OnPaint( wxPaintEvent &event );
+	void OnMouseDown(wxMouseEvent &event);
 
 private:
 	int nColNum;
@@ -182,8 +217,9 @@ private:
 	int nBiritu;
 	int nBlockSize;
 
+	void OnGridCellLeftClick(wxNesEngineGridEvent& event);
 
-	//wxDECLARE_EVENT_TABLE();
+	wxDECLARE_EVENT_TABLE();
 
 };
 

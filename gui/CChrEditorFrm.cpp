@@ -121,9 +121,14 @@ void CChrEditorFrm::OnToolLeftClick(wxCommandEvent& event)
 // グリッド
 ///////////////////////////////////////////////////////////////////////////////
 
+
+//IMPLEMENT_DYNAMIC_CLASS(wxNesEngineGridEvent, wxNotifyEvent)
+
+
+
 wxBEGIN_EVENT_TABLE(CNesEngineGridBase, wxScrolledWindow)
 	EVT_PAINT(CNesEngineGridBase::OnPaint)
-
+	EVT_LEFT_DOWN (CNesEngineGridBase::OnMouseDown)
 wxEND_EVENT_TABLE()
 
 CNesEngineGridBase::CNesEngineGridBase(wxWindow *parent,
@@ -164,20 +169,16 @@ void CNesEngineGridBase::InitCells(int cols, int rows)
 	DrawSurface();
 }
 
-
 wxDC& CNesEngineGridBase::GetSurfaceDC()
 {
 	return m_dc;
 }
 
-
 void CNesEngineGridBase::SetSurface()
 {
-
 	wxBitmap bmp = wxBitmap(this->GetVirtualSize());
 	m_dc.SelectObject(bmp);
 	m_dc.Clear();
-
 }
 
 void CNesEngineGridBase::SetCellSize(wxSize size)
@@ -250,9 +251,7 @@ void CNesEngineGridBase::DrawSurface()
 
 	for (int r = 0; r < nRowNum; r++) {
 		for (int c = 0; c < nColNum; c++) {
-//			int x1 = c * (cellSize.GetWidth() - 1);
-//			int y1 = r * (cellSize.GetHeight() - 1);
-//			dc.DrawRectangle(wxPoint(x1 ,y1), cellSize);
+			DrawCell(r,c);
 		}
 	}
 
@@ -272,8 +271,8 @@ void CNesEngineGridBase::DrawCell(int col, int row)
 	int x1 = col * (cellSize.GetWidth() - 1);
 	int y1 = row * (cellSize.GetHeight() - 1);
 
-	int x2 = x1 + cellSize.GetWidth();
-	int y2 = y1 + cellSize.GetHeight();
+	int x2 = x1 + cellSize.GetWidth() - 1;
+	int y2 = y1 + cellSize.GetHeight() - 1;
 
 	wxPen pen(1);
 	pen.SetColour(cell->GetLeftLineColor());
@@ -311,17 +310,32 @@ void CNesEngineGridBase::OnPaint( wxPaintEvent& event )
 	dc.Blit(wxPoint(0,0), this->GetVirtualSize(), &(GetSurfaceDC()), wxPoint(0,0));
 }
 
+void CNesEngineGridBase::OnMouseDown(wxMouseEvent &event)
+{
+	int x,y,xx,yy ;
+	event.GetPosition(&x,&y);
+	CalcUnscrolledPosition( x, y, &xx, &yy );
+	int a = 0;
+	wxNesEngineGridEvent gritEvt(GetId(), 0, nullptr);
+	GetEventHandler()->ProcessEvent(gritEvt);
 
+//	m_anchorpoint = wxPoint( xx , yy ) ;
+//	m_currentpoint = m_anchorpoint ;
+//	m_rubberBand = true ;
+//	CaptureMouse() ;
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // 画像編集メイン
 ///////////////////////////////////////////////////////////////////////////////
 
 
-//wxBEGIN_EVENT_TABLE(CChrEditorView, wxScrolledWindow)
-//	EVT_PAINT(CChrEditorView::OnPaint)
-//
-//wxEND_EVENT_TABLE()
+wxBEGIN_EVENT_TABLE(CChrEditorView, CNesEngineGridBase)
+	EVT_NESENGINE_GRID_CELL_LEFT_CLICK(CChrEditorView::OnGridCellLeftClick)
+////	EVT_PAINT(CChrEditorView::OnPaint)
+////
+wxEND_EVENT_TABLE()
 
 
 CChrEditorView::CChrEditorView(wxWindow *parent,
@@ -347,5 +361,13 @@ CChrEditorView::CChrEditorView(wxWindow *parent,
 //	// TODO Auto-generated destructor stub
 //}
 
+//---------------------------------
+// イベントハンドラ
+//---------------------------------
+
+void CChrEditorView::OnGridCellLeftClick(wxNesEngineGridEvent& event)
+{
+	int a = 0;
+}
 
 } /* namespace NesEngine */
