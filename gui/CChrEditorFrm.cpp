@@ -131,6 +131,8 @@ wxBEGIN_EVENT_TABLE(CNesEngineGridBase, wxScrolledWindow)
 	EVT_LEFT_DOWN (CNesEngineGridBase::OnMouseDown)
 wxEND_EVENT_TABLE()
 
+//EVT_NESENGINE_GRID_CELL_LEFT_CLICK(CNesEngineGridBase::OnGridCellLeftClickTest)
+
 CNesEngineGridBase::CNesEngineGridBase(wxWindow *parent,
 		wxWindowID winid,
 		const wxPoint& pos,
@@ -315,16 +317,43 @@ void CNesEngineGridBase::OnMouseDown(wxMouseEvent &event)
 	int x,y,xx,yy ;
 	event.GetPosition(&x,&y);
 	CalcUnscrolledPosition( x, y, &xx, &yy );
-	int a = 0;
-	wxNesEngineGridEvent gritEvt(GetId(), 0, nullptr);
-	GetEventHandler()->ProcessEvent(gritEvt);
 
+	CNesEnineGridCell* cell = GetCellPhisicsPos(x, y);
+	wxNesEngineGridEvent gritEvt(GetId(), NESENGINE_GRID_CELL_LEFT_CLICK, nullptr);
+	ProcessWindowEvent(gritEvt);
+
+	//GetEventHandler()->ProcessEvent(gritEvt);
+	//wxPostEvent(this, gritEvt);
 //	m_anchorpoint = wxPoint( xx , yy ) ;
 //	m_currentpoint = m_anchorpoint ;
 //	m_rubberBand = true ;
 //	CaptureMouse() ;
 
 }
+
+CNesEnineGridCell* CNesEngineGridBase::GetCellPhisicsPos(int x, int y)
+{
+	CNesEnineGridCell* cell = nullptr;
+	// TODO ここの実装汎用化したい
+	for (int r=0; r < nRowNum; r++) {
+		for (int c=0; c < nRowNum; c++) {
+			int x1 = r * (cellSize.GetWidth() - 1);
+			int y1 = c * (cellSize.GetHeight() - 1);
+			int x2 = x1 + cellSize.GetWidth() - 1;
+			int y2 = y2 + cellSize.GetHeight() - 1;
+			if ((x1 < x && x <= x2)
+			 && (y1 < y && y <= y2)) {
+				int idx = r * c;
+				cell = m_cells[idx].get();
+				goto SEARCH_END;
+			}
+		}
+	}
+	SEARCH_END:
+
+	return cell;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // 画像編集メイン
@@ -333,8 +362,6 @@ void CNesEngineGridBase::OnMouseDown(wxMouseEvent &event)
 
 wxBEGIN_EVENT_TABLE(CChrEditorView, CNesEngineGridBase)
 	EVT_NESENGINE_GRID_CELL_LEFT_CLICK(CChrEditorView::OnGridCellLeftClick)
-////	EVT_PAINT(CChrEditorView::OnPaint)
-////
 wxEND_EVENT_TABLE()
 
 
@@ -346,13 +373,11 @@ CChrEditorView::CChrEditorView(wxWindow *parent,
 		const wxString& name)
  : CNesEngineGridBase(parent, winid, pos, size, style, name)
 {
-
 	nBiritu = 1;
 	nBlockSize = 8 * nBiritu;
 
 	InitCells(8, 8);
 	SetCellSize(wxSize(10,10));
-
 
 }
 
