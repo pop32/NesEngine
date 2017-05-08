@@ -308,7 +308,7 @@ WXLRESULT NesEditorMainViewBase<T>::MSWWindowProc(WXUINT message, WXWPARAM wPara
 		switch (wParam) {
 		// 候補文字列ウィンドウ
 		case IMN_OPENCANDIDATE:
-			HIMC hImc = ImmGetContext(this->GetHWND());
+ 			HIMC hImc = ImmGetContext(this->GetHWND());
 			CANDIDATEFORM cndFrm = {0};
 			wxRect rect = this->GetClientRect();
 			wxPoint point = GetCaretPixelPoint();
@@ -994,6 +994,12 @@ void NesEditorMainViewBase<T>::PrintEdittingMultiByteStr(wxString &str)
 {
 	// TODO 20170103_01 複数単語変換処理
 	//DrawText(str, m_xCaret, m_yCaret, false);
+
+	wxString &text = *m_text[m_yCharPos];
+	DrawText(text, 0, m_yCharPos, false);
+	// 候補を描画
+	DrawKouhoText(str, m_xCaret, m_yCharPos, false);
+	this->Refresh();
 }
 
 template <class T>
@@ -1086,6 +1092,29 @@ void NesEditorMainViewBase<T>::DrawTextTest(wxString& str, wxCoord col, wxCoord 
 	m_dc.DrawText(str, m_xMargin + (col * m_widthChar), m_yMargin + (row * m_heightChar));
 	this->Refresh();
 }
+
+template <class T>
+void NesEditorMainViewBase<T>::DrawKouhoText(wxString& str, wxCoord col, wxCoord row, bool bRefresh)
+{
+	wxMemoryDC& dc = m_dc;
+
+	dc.SetPen(*wxWHITE);
+	dc.SetBrush(*wxWHITE);
+	size_t slen = GetStringBLen(str);
+	dc.DrawRectangle(0, m_yMargin + (row * m_heightChar)
+			, m_xMargin + (slen * m_widthChar), m_heightChar);
+
+	dc.SetFont(m_font);
+	dc.SetTextForeground(*wxBLACK);
+	int x = col;
+	dc.DrawText(str, m_xMargin + (x * m_widthChar), m_yMargin + (row * m_heightChar));
+
+	if (bRefresh) {
+		this->Refresh();
+	}
+
+}
+
 
 /**
  * スクロール幅設定

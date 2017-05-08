@@ -132,6 +132,7 @@ protected:
 	void DrawTextLine(wxCoord startRow, bool bRefresh = true);
 	void DrawText(wxString& text, wxCoord col, wxCoord row, bool bRefresh = true);
 	void DrawTextTest(wxString& text, wxCoord col, wxCoord row);
+	void DrawKouhoText(wxString& text, wxCoord col, wxCoord row, bool bRefresh = true);
 
 	void SetScroll(bool bRefresh = true);
 	void SetSurface(bool bRefresh = true);
